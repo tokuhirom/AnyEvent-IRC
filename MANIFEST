@@ -1,0 +1,14 @@
+Changes
+MANIFEST
+README
+Makefile.PL
+lib/AnyEvent/IRC.pm
+lib/AnyEvent/IRC/Util.pm
+lib/AnyEvent/IRC/Client/Connection.pm
+lib/AnyEvent/IRC/Connection.pm
+samples/test_connect
+samples/notify
+samples/anyeventirccl
+samples/anyeventirc
+t/00_load.t
+t/01_utils.t

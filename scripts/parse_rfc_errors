@@ -1,0 +1,24 @@
+#!/usr/bin/perl
+use strict;
+my $in_section = 0;
+my $in_desc    = 0;
+my %errors;
+my $cur_error;
+
+while (<STDIN>) {
+   if (/^\s+(\d+)\s+((?:ERR|RPL)_\S+)\s*$/) {
+      $cur_error = $1;
+      $errors{$cur_error}->{name} = $2;
+   } elsif (/^\s+"([^:]+):.*"\s*$/) {
+      $errors{$cur_error}->{params} = [ split /\s+/, $1 ];
+   }
+}
+
+print "our %RFC_NUMCODE_MAP = (\n";
+for (sort keys %errors) {
+   next unless $_ != 0;
+   my $pcnt = 0;
+   printf "   '%03d' => '%s',\n",
+      $_, $errors{$_}->{name};
+}
+print ");\n";

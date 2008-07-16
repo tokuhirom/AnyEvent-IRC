@@ -1,0 +1,12 @@
+#!/opt/perl/bin/perl
+use Module::CPANTS::Analyse;
+my $ana = Module::CPANTS::Analyse->new ({
+   dist => $ARGV[0]
+});
+$ana->unpack;
+$ana->analyse;
+$ana->calc_kwalitee;
+use Data::Dumper;
+for (keys %{$ana->d->{kwalitee}}) {
+   printf "%-30s %s\n", $_, $ana->d->{kwalitee}->{$_}
+}

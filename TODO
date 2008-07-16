@@ -1,0 +1,11 @@
+- replace i by I and:
+      16:52:25 <pippijn>        I tried to preserve the case in all channel and nicknames Net::IRC3::Client::Connection passes to hi s user. But in the inter‐
+      16:52:28 <pippijn>        nal structures i’m using lower case for the channel names.
+
+- fix channel case in Net::IRC3::Client::Connection
+- add CTCP!
+- add mode info to nicknames?
+- add mode command handling?
+- add TOPIC support
+- rework channel framework => make some real objects
+- add support for KILL!
