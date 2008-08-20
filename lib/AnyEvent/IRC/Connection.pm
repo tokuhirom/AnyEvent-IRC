@@ -80,18 +80,19 @@ sub connect {
             fh => $fh,
             on_eof => sub {
                $self->disconnect ("EOF from server $host:$port");
-               delete $self->{socket};
             },
             on_error => sub {
                $self->disconnect ("error in connection to server $host:$port: $!");
-               delete $self->{socket};
             },
             on_read => sub {
                my ($hdl) = @_;
                $hdl->push_read (line => sub {
                   $self->_feed_irc_data ($_[1]);
                });
-            };
+            }
+         );
+
+      $self->event ('connect');
    };
 }
 
@@ -104,7 +105,8 @@ the sockets and send a 'disconnect' event with C<$reason> as argument.
 
 sub disconnect {
    my ($self, $reason) = @_;
-
+   return unless $self->{socket};
+   delete $self->{socket};
    $self->event (disconnect => $reason);
 }
 
@@ -170,10 +172,8 @@ sub _feed_irc_data {
    my $m = parse_irc_msg ($line);
 
    $self->event (read => $m);
-   $self->event ('*' => $m);
-   $self->event ((lc $m->{command}), $m);
-
-   $self->{cbs}->{'*'} = $nxt;
+   $self->event ('irc_*' => $m);
+   $self->event ('irc_' . (lc $m->{command}), $m);
 }
 
 =back

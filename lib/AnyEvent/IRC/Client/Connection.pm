@@ -702,7 +702,7 @@ sub topic_change_cb {
 
 =head1 EXAMPLES
 
-See samples/netirc3cl and other samples in samples/ for some examples on how to use AnyEvent::IRC::Client::Connection.
+See samples/anyeventirccl and other samples in samples/ for some examples on how to use AnyEvent::IRC::Client::Connection.
 
 =head1 AUTHOR
 
