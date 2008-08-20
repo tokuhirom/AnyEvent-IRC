@@ -9,3 +9,4 @@
 - add TOPIC support
 - rework channel framework => make some real objects
 - add support for KILL!
+- capture error 433/ERR_NICKNAMEINUSE if the automatic renamer is active
