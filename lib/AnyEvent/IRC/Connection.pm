@@ -8,7 +8,7 @@ use AnyEvent::Handle;
 use AnyEvent::IRC::Util qw/mk_msg parse_irc_msg/;
 use Object::Event;
 
-use base Object::Event;
+use base Object::Event::;
 
 =head1 NAME
 

@@ -1,8 +1,10 @@
 package AnyEvent::IRC::Client::Connection;
-use base AnyEvent::IRC::Connection;
-use AnyEvent::IRC::Util qw/prefix_nick decode_ctcp/;
 use strict;
 no warnings;
+
+use AnyEvent::IRC::Util qw/prefix_nick decode_ctcp/;
+
+use base AnyEvent::IRC::Connection::;
 
 =head1 NAME
 
