@@ -1,13 +1,13 @@
-package Net::IRC3;
+package AnyEvent::IRC;
 use strict;
 use AnyEvent;
 use IO::Socket::INET;
 
-our $ConnectionClass = 'Net::IRC3::Connection';
+our $ConnectionClass = 'AnyEvent::IRC::Connection';
 
 =head1 NAME
 
-Net::IRC3 - An event system independend IRC protocol module
+AnyEvent::IRC - An event system independend IRC protocol module
 
 =head1 VERSION
 
@@ -19,14 +19,14 @@ our $VERSION = '0.5';
 
 =head1 SYNOPSIS
 
-Using the simplistic L<Net::IRC3::Connection>:
+Using the simplistic L<AnyEvent::IRC::Connection>:
 
    use AnyEvent;
-   use Net::IRC3::Connection;
+   use AnyEvent::IRC::Connection;
 
    my $c = AnyEvent->condvar;
 
-   my $con = new Net::IRC3::Connection;
+   my $con = new AnyEvent::IRC::Connection;
 
    $con->connect ("localhost", 6667);
 
@@ -36,15 +36,15 @@ Using the simplistic L<Net::IRC3::Connection>:
 
    $c->wait;
 
-Using the more sophisticatd L<Net::IRC3::Client::Connection>:
+Using the more sophisticatd L<AnyEvent::IRC::Client::Connection>:
 
    use AnyEvent;
-   use Net::IRC3::Client::Connection;
+   use AnyEvent::IRC::Client::Connection;
 
    my $c = AnyEvent->condvar;
 
    my $timer;
-   my $con = new Net::IRC3::Client::Connection;
+   my $con = new AnyEvent::IRC::Client::Connection;
 
    $con->reg_cb (registered => sub { print "I'm in!\n"; 0 });
    $con->reg_cb (disconnect => sub { print "I'm out!\n"; 0 });
@@ -58,7 +58,7 @@ Using the more sophisticatd L<Net::IRC3::Client::Connection>:
       }
    );
 
-   $con->send_srv (PRIVMSG => "Hello there i'm the cool Net::IRC3 test script!", 'elmex');
+   $con->send_srv (PRIVMSG => "Hello there i'm the cool AnyEvent::IRC test script!", 'elmex');
 
    $con->connect ("localhost", 6667);
    $con->register (qw/testbot testbot testbot/);
@@ -70,22 +70,22 @@ Using the more sophisticatd L<Net::IRC3::Client::Connection>:
 
 =head1 DESCRIPTION
 
-The L<Net::IRC3> module consists of L<Net::IRC3::Connection>, L<Net::IRC3::Client::Connection>
-and L<Net::IRC3::Util>. L<Net::IRC3> only contains this documentation.
+The L<AnyEvent::IRC> module consists of L<AnyEvent::IRC::Connection>, L<AnyEvent::IRC::Client::Connection>
+and L<AnyEvent::IRC::Util>. L<AnyEvent::IRC> only contains this documentation.
 It manages connections and parses and constructs IRC messages.
 
-L<Net::IRC3> can be viewed as toolbox for handling IRC connections
+L<AnyEvent::IRC> can be viewed as toolbox for handling IRC connections
 and communications. It won't do everything for you, and you still
 need to know a few details of the IRC protocol.
 
-L<Net::IRC3::Client::Connection> is a more highlevel IRC connection
+L<AnyEvent::IRC::Client::Connection> is a more highlevel IRC connection
 that already processes some messages for you and will generated some
 events that are maybe useful to you. It will also do PING replies for you
 and manage channels a bit.
 
-L<Net::IRC3::Connection> is a lowlevel connection that only connects
+L<AnyEvent::IRC::Connection> is a lowlevel connection that only connects
 to the server and will let you send and receive IRC messages.
-L<Net::IRC3::Connection> does not imply any client behaviour, you could also
+L<AnyEvent::IRC::Connection> does not imply any client behaviour, you could also
 use it to implement an IRC server.
 
 Note that the *::Connection module uses AnyEvent as it's IO event subsystem.
@@ -94,7 +94,7 @@ that AnyEvent has support for (eg. L<Gtk2> or L<Event>).
 
 =head1 EXAMPLES
 
-See the samples/ directory for some examples on how to use Net::IRC3.
+See the samples/ directory for some examples on how to use AnyEvent::IRC.
 
 =head1 AUTHOR
 
@@ -102,11 +102,11 @@ Robin Redeker, C<< <elmex@ta-sa.org> >>
 
 =head1 SEE ALSO
 
-L<Net::IRC3::Util>
+L<AnyEvent::IRC::Util>
 
-L<Net::IRC3::Connection>
+L<AnyEvent::IRC::Connection>
 
-L<Net::IRC3::Client::Connection>
+L<AnyEvent::IRC::Client::Connection>
 
 L<AnyEvent>
 
@@ -124,7 +124,7 @@ your bug as I make changes.
 
 You can find documentation for this module with the perldoc command.
 
-    perldoc Net::IRC3
+    perldoc AnyEvent::IRC
 
 You can also look for information at:
 

@@ -11,4 +11,4 @@ samples/notify
 samples/anyeventirccl
 samples/anyeventirc
 t/00_load.t
-t/01_utils.t
+t/01_util.t
