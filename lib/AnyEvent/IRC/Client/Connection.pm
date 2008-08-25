@@ -209,6 +209,12 @@ This constructor takes no arguments.
 
 =cut
 
+my %LOWER_CASEMAP = (
+   rfc1459 => sub { tr/A-Z[]\\\^/a-z{}|~/ },
+   'strict-rfc1459' => sub { tr/A-Z[]\\/a-z{}|/ },
+   ascii => sub { tr/A-Z/a-z/ },
+);
+
 sub new {
    my $this = shift;
    my $class = ref($this) || $this;
@@ -216,6 +222,7 @@ sub new {
 
    $self->reg_cb ('irc_*'     => \&debug_cb);
    $self->reg_cb (irc_001     => \&welcome_cb);
+   $self->reg_cb (irc_005     => \&isupport_cb);
    $self->reg_cb (irc_join    => \&join_cb);
    $self->reg_cb (irc_nick    => \&nick_cb);
    $self->reg_cb (irc_part    => \&part_cb);
@@ -241,6 +248,8 @@ sub new {
    $self->reg_cb (irc_332        => \&rpl_topic_cb);
    $self->reg_cb (irc_topic      => \&topic_change_cb);
 
+   $self->{isupport} = {};
+   $self->{casemap_func} = $LOWER_CASEMAP{rfc1459};
    $self->{def_nick_change} = $self->{nick_change} =
       sub {
          my ($old_nick) = @_;
@@ -392,11 +401,11 @@ with a memory leak.
 sub send_chan {
    my ($self, $chan, @msg) = @_;
 
-   if ($self->{channel_list}->{lc $chan}) {
+   if ($self->{channel_list}->{$self->lc($chan)}) {
       $self->send_msg (undef, @msg);
 
    } else {
-      push @{$self->{chan_queue}->{lc $chan}}, \@msg;
+      push @{$self->{chan_queue}->{$self->lc ($chan)}}, \@msg;
    }
 }
 
@@ -408,7 +417,7 @@ Clears the channel queue of the channel C<$channel>.
 
 sub clear_chan_queue {
    my ($self, $chan) = @_;
-   $self->{chan_queue}->{lc $chan} = [];
+   $self->{chan_queue}->{$self->lc ($chan)} = [];
 }
 
 =item B<enable_ping ($interval, $cb)>
@@ -448,13 +457,44 @@ sub enable_ping {
       });
 }
 
+=item B<lc ($str)>
+
+Converts the given string to lowercase according to CASEMAPPING setting given by
+the IRC server. If none was sent, the default - rfc1459 - will be used.
+
+=cut
+
+sub lc {
+   my($self, $str) = @_;
+   $_ = $str;
+   $self->{casemap_func}->();
+   return $_;
+}
+
+=item B<isupport ([$key])>
+
+Provides access to the ISUPPORT variables sent by the IRC server. If $key is
+given this method will return its value only, otherwise a hashref with all values
+is returned
+
+=cut
+
+sub isupport {
+   my($self, $key) = @_;
+   if (defined ($key)) {
+      return $self->{isupport}->{$key};
+   } else {
+      return $self->{isupport};
+   }
+}
+
 ################################################################################
 # Private utility functions
 ################################################################################
 
 sub _was_me {
    my ($self, $msg) = @_;
-   lc prefix_nick ($msg) eq lc $self->nick ()
+   $self->lc (prefix_nick ($msg)) eq $self->lc ($self->nick ())
 }
 
 ################################################################################
@@ -465,12 +505,12 @@ sub channel_remove_event_cb {
    my ($self, $msg, $chan, @nicks) = @_;
 
    for my $nick (@nicks) {
-      if (lc ($nick) eq lc ($self->nick ())) {
-         delete $self->{chan_queue}->{lc $chan};
-         delete $self->{channel_list}->{lc $chan};
+      if ($self->lc ($nick) eq $self->lc ($self->nick ())) {
+         delete $self->{chan_queue}->{$self->lc ($chan)};
+         delete $self->{channel_list}->{$self->lc ($chan)};
          last;
       } else {
-         delete $self->{channel_list}->{lc $chan}->{$nick};
+         delete $self->{channel_list}->{$self->lc ($chan)}->{$nick};
       }
    }
 
@@ -481,20 +521,20 @@ sub channel_add_event_cb {
    my ($self, $msg, $chan, @nicks) = @_;
 
    for my $nick (@nicks) {
-      if (lc ($nick) eq lc ($self->nick ())) {
-         for (@{$self->{chan_queue}->{lc $chan}}) {
+      if ($self->lc ($nick) eq $self->lc ($self->nick ())) {
+         for (@{$self->{chan_queue}->{$self->lc ($chan)}}) {
             $self->send_msg (undef, @$_);
          }
          $self->clear_chan_queue ($chan);
       }
 
-      $self->{channel_list}->{lc $chan}->{$nick} = 1;
+      $self->{channel_list}->{$self->lc ($chan)}->{$nick} = 1;
    }
 }
 
 sub _filter_new_nicks_from_channel {
    my ($self, $chan, @nicks) = @_;
-   grep { not exists $self->{channel_list}->{lc $chan}->{$_} } @nicks;
+   grep { not exists $self->{channel_list}->{$self->lc ($chan)}->{$_} } @nicks;
 }
 
 sub anymsg_cb {
@@ -550,6 +590,24 @@ sub welcome_cb {
 
    $self->event ('registered');
 }
+
+sub isupport_cb {
+   my ($self, $msg) = @_;
+   foreach (@{$msg->{params}}) {
+      if (/([A-Z]+)=(.+)/) {
+         $self->{isupport}->{$1} = $2;
+      }
+   }
+
+   if (defined (my $casemap = $self->{isupport}->{CASEMAPPING})) {
+      if (defined (my $func = $LOWER_CASEMAP{$casemap})) {
+         $self->{casemap_func} = $func;
+      } else {
+         $self->{casemap_func} = $LOWER_CASEMAP{rfc1459};
+      }
+   }
+}
+
 
 sub ping_cb {
    my ($self, $msg) = @_;
@@ -663,7 +721,7 @@ sub change_nick_login_cb {
    } else {
       my $newnick = $self->{nick_change}->($self->nick);
 
-      if (lc $newnick eq lc $self->{nick}) {
+      if ($self->lc ($newnick) eq $self->lc ($self->{nick})) {
          $self->disconnect;
          return 0;
       }
