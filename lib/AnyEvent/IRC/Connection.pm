@@ -52,7 +52,7 @@ sub new {
 =item B<connect ($host, $port)>
 
 Tries to open a socket to the host C<$host> and the port C<$port>.
-If an error occured it will die (use eval to catch the exception).
+If an error occurred it will die (use eval to catch the exception).
 
 =cut
 
