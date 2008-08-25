@@ -1,30 +1,43 @@
-#!perl
+#!/usr/bin/env perl
 use AnyEvent;
-use Net::IRC3::Client::Connection;
+use AnyEvent::IRC::Client::Connection;
 
 my $c = AnyEvent->condvar;
 
-my $timer;
-my $con = new Net::IRC3::Client::Connection;
+my $con = new AnyEvent::IRC::Client::Connection;
 
-$con->reg_cb (registered => sub { print "I'm in!\n"; 0 });
-$con->reg_cb (disconnect => sub { print "I'm out!\n"; 0 });
 $con->reg_cb (
-   sent => sub {
-      if ($_[2] eq 'PRIVMSG') {
-         print "Sent message!\n";
-         $timer = AnyEvent->timer (after => 1, cb => sub { $c->broadcast });
+   connect => sub {
+      my ($con, $err) = @_;
+
+      if (defined $err) {
+         warn "Couldn't connect: $err\n";
+         $c->broadcast;
+      } else {
+         print "Connected!\n";
       }
-      1
-   }
+
+      $con->register (qw/testbot testbot testbot/);
+   },
+   registered => sub {
+      my ($con) = @_;
+      print "I'm in!\n";
+
+      $con->reg_cb (buffer_empty => sub {
+         my ($con) = @_;
+         $con->unreg_me;
+         $con->disconnect ("Message delivered!");
+      });
+      $con->send_msg (
+         PRIVMSG => 'elmex', "Hello there i'm the cool AnyEvent::IRC test script!"
+      );
+   },
+   disconnect => sub {
+      print "I'm out ($_[1])!\n";
+      $c->broadcast
+   },
 );
 
-$con->send_srv (PRIVMSG => "Hello there i'm the cool Net::IRC3 test script!", 'elmex');
-
 $con->connect ("localhost", 6667);
-$con->register (qw/testbot testbot testbot/);
 
 $c->wait;
-undef $timer;
-
-$con->disconnect;

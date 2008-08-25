@@ -1,13 +1,13 @@
-#!/opt/perl/bin/perl
+#!/usr/bin/env perl
 use strict;
 use AnyEvent::Impl::Perl;
 use AnyEvent;
-use Net::IRC3::Connection;
-$Net::IRC3::Client::DEBUG = 1;
+use AnyEvent::IRC::Connection;
+$AnyEvent::IRC::Client::DEBUG = 1;
 
 my $c = AnyEvent->condvar;
 
-my $con = Net::IRC3::Connection->new;
+my $con = AnyEvent::IRC::Connection->new;
 
 
 my ($nick, $user, $real) = qw/BinDepp BinDepp depp/;
@@ -19,11 +19,12 @@ $con->reg_cb (irc_001 => sub {
 
 # display all irc messages for debugging
 $con->reg_cb ('irc_*' => sub { warn "DEBUG: " . join ('|', %{$_[1]}) . "\n"; });
+$con->reg_cb ('sent'  => sub { shift; warn "DEBUG SENT: " . join ('|', @_) . "\n"; });
 
 # we register now a callback on our self defined event
 $con->reg_cb (welcome => sub {
    my ($con) = @_;
-   $con->send_msg (undef, "PRIVMSG", "Hi!!!", "elmex");
+   $con->send_msg (undef, "PRIVMSG", "elmex", "Hi!!!");
 });
 
 my $t;
@@ -44,8 +45,8 @@ $con->reg_cb (
       }
 
       # send IRC registration
-      $con->send_msg (undef, "NICK", undef, $nick);
-      $con->send_msg (undef, "USER", $real || $nick, $user || $nick, "*", "0");
+      $con->send_msg (undef, "NICK", $nick);
+      $con->send_msg (undef, "USER", $user || $nick, "*", "0", $real || $nick);
    },
    disconnect => sub {
       warn "Oh, got a disconnect: $_[1], exiting...\n";

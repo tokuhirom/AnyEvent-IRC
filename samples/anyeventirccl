@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+#!/usr/bin/env perl
 use strict;
 use Event;
 use AnyEvent::IRC::Client::Connection;
@@ -14,8 +14,8 @@ $pc->reg_cb (
    irc_privmsg => sub {
       my ($self, $msg) = @_;
 
-      if ($msg->{trailing} =~ m/net_irc3:\s*(.*)/) {
-         $pc->send_chan ("#test", "PRIVMSG", "yes?", "#test");
+      if ($msg->{params}->[-1] =~ m/net_irc3:\s*(.*)/) {
+         $pc->send_chan ("#test", "PRIVMSG", "#test", "yes?");
       }
    }
 );
@@ -55,7 +55,7 @@ $pc->reg_cb (
 
 # these commands will queue until the connection
 # is completly registered and has a valid nick etc.
-$pc->send_srv ("JOIN", undef, "#test");
-$pc->send_chan ("#test", "PRIVMSG", "hi, i'm a bot!", "#test");
+$pc->send_srv ("JOIN", "#test");
+$pc->send_chan ("#test", "PRIVMSG", "#test", "hi, i'm a bot!");
 
 $c->wait;

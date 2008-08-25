@@ -89,6 +89,9 @@ sub connect {
                $hdl->push_read (line => sub {
                   $self->_feed_irc_data ($_[1]);
                });
+            },
+            on_drain => sub {
+               $self->event ('buffer_empty');
             }
          );
 
@@ -216,6 +219,14 @@ C<@ircmsg> are the arguments to C<AnyEvent::IRC::Util::mk_msg>.
 
 Emitted when a message (C<$msg>) was read from the server.
 C<$msg> is the hash reference returned by C<AnyEvent::IRC::Util::parse_irc_msg>;
+
+=item B<buffer_empty>
+
+This event is emitted when the write buffer of the underlying connection
+is empty and all data has been given to the kernel. See also C<samples/notify>
+about a usage example.
+
+Please note that this buffer is NOT the queue mentioned in L<AnyEvent::IRC::Client::Connection>!
 
 =back
 

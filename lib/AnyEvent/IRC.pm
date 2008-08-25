@@ -116,7 +116,7 @@ RFC 2812 - Internet Relay Chat: Client Protocol
 
 Please report any bugs or feature requests to
 C<bug-net-irc3 at rt.cpan.org>, or through the web interface at
-L<http://rt.cpan.org/NoAuth/ReportBug.html?Queue=Net-IRC3>.
+L<http://rt.cpan.org/NoAuth/ReportBug.html?Queue=AnyEvent-IRC>.
 I will be notified, and then you'll automatically be notified of progress on
 your bug as I make changes.
 
@@ -132,19 +132,19 @@ You can also look for information at:
 
 =item * AnnoCPAN: Annotated CPAN documentation
 
-L<http://annocpan.org/dist/Net-IRC3>
+L<http://annocpan.org/dist/AnyEvent-IRC>
 
 =item * CPAN Ratings
 
-L<http://cpanratings.perl.org/d/Net-IRC3>
+L<http://cpanratings.perl.org/d/AnyEvent-IRC>
 
 =item * RT: CPAN's request tracker
 
-L<http://rt.cpan.org/NoAuth/Bugs.html?Dist=Net-IRC3>
+L<http://rt.cpan.org/NoAuth/Bugs.html?Dist=AnyEvent-IRC>
 
 =item * Search CPAN
 
-L<http://search.cpan.org/dist/Net-IRC3>
+L<http://search.cpan.org/dist/AnyEvent-IRC>
 
 =back
 

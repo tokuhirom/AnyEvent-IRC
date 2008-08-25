@@ -1,15 +1,25 @@
-#!perl
+#!/usr/bin/env perl
 use AnyEvent;
-use Net::IRC3::Connection;
+use AnyEvent::IRC::Connection;
 
 my $c = AnyEvent->condvar;
 
-my $con = new Net::IRC3::Connection;
+my $con = new AnyEvent::IRC::Connection;
 
 $con->connect ("localhost", 6667);
 
-$con->reg_cb (irc_001 => sub { print "$_[1]->{prefix} says i'm in the IRC: $_[1]->{trailing}!\n"; $c->broadcast });
-$con->send_msg (undef, NICK => undef, "testbot");
-$con->send_msg (undef, USER => 'testbot', "testbot", '*', '0');
+$con->reg_cb (
+   connect => sub {
+      my ($con) = @_;
+
+      $con->send_msg (undef, NICK => "testbot");
+      $con->send_msg (undef, USER => "testbot", '*', '0', 'testbot');
+   },
+   irc_001 => sub {
+      my ($con, $msg) = @_;
+      print "$msg->{prefix} says i'm in the IRC: $msg->{params}->[-1]!\n";
+      $c->broadcast
+   }
+);
 
 $c->wait;

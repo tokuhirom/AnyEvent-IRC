@@ -19,5 +19,5 @@ WriteMakefile(
        SUFFIX => 'gz',
        PREOP => 'pod2text lib/AnyEvent/IRC.pm | tee README >$(DISTVNAME)/README; chmod -R u=rwX,go=rX . ;',
     },
-    clean               => { FILES => 'Net-IRC3-*' },
+    clean               => { FILES => 'AnyEvent-IRC-*' },
 );
