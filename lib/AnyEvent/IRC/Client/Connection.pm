@@ -380,10 +380,10 @@ sub clear_srv_queue {
 }
 
 
-=item B<send_chan ($channel, $command, $trailing, @params))>
+=item B<send_chan ($channel, $command, @params))>
 
 This function sends a message (constructed by C<mk_msg (undef, $command,
-$trailing, @params)> to the server, like C<send_srv> only that it will queue
+@params)> to the server, like C<send_srv> only that it will queue
 the messages if it hasn't joined the channel C<$channel> yet. The queued
 messages will be send once the connection successfully JOINed the C<$channel>.
 
