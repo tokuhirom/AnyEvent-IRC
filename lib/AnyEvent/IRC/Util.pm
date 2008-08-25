@@ -16,7 +16,7 @@ AnyEvent::IRC::Util - Common utilities that help with IRC protocol handling
 
    use AnyEvent::IRC qw/parse_irc_msg mk_msg/;
 
-   my $msgdata = mk_msg (undef, PRIVMSG => "my hands glow!", "mcmanus");
+   my $msgdata = mk_msg (undef, PRIVMSG => "mcmanus", "my hands glow!");
 
 =head1 FUNCTIONS
 
@@ -96,11 +96,11 @@ sub parse_irc_msg {
 
   push @a, $t if defined $t;
 
-  my $m = { prefix => $pref, command => $cmd, params => \@a, trailing => $t };
+  my $m = { prefix => $pref, command => $cmd, params => \@a };
   return $p ? $m : undef;
 }
 
-=item B<mk_msg ($prefix, $command, $trailing, @params)>
+=item B<mk_msg ($prefix, $command, @params)>
 
 This function assembles a IRC message. The generated
 message will look like (pseudo code!)
@@ -109,24 +109,36 @@ message will look like (pseudo code!)
 
 Please refer to RFC 2812 how IRC messages normally look like.
 
-The prefix and the trailing string will be omitted if they are C<undef>.
+The prefix will be omitted if they are C<undef>.
+
+Please note that only the last parameter may contain spaces, and if it
+contains spaces it will be quoted as the trailing part of the
+IRC message.
 
 EXAMPLES:
 
-   mk_msg (undef, "PRIVMSG", "you suck!", "magnus");
+   mk_msg (undef, "PRIVMSG", "magnus", "you suck!");
    # will return: "PRIVMSG magnus :you suck!\015\012"
 
-   mk_msg (undef, "JOIN", undef, "#test");
+   mk_msg (undef, "PRIVMSG", "magnus", "Hi!");
+   # will return: "PRIVMSG magnus :Hi!\015\012"
+
+   mk_msg (undef, "JOIN", "#test");
    # will return: "JOIN #test\015\012"
 
 =cut
 
 sub mk_msg {
-  my ($prefix, $command, $trail, @params) = @_;
+  my ($prefix, $command, @params) = @_;
   my $msg = "";
 
   $msg .= defined $prefix ? ":$prefix " : "";
   $msg .= "$command";
+
+  my $trail;
+  if (@params && $params[-1] =~ /\x20/) {
+     $trail = pop @params;
+  }
 
   # FIXME: params must be counted, and if > 13 they have to be
   # concationated with $trail
@@ -166,11 +178,13 @@ sub escape_ctcp {
    $data
 }
 
-=item B<decode_ctcp ($trailing)>
+=item B<decode_ctcp ($data)>
 
-This function decodes the C<$trailing> part of an IRC message.
+This function decodes CTCP messages contained in an IRC message.
+C<$data> should be the last parameter of a IRC PRIVMSG or NOTICE.
+
 It will first unescape the lower layer, extract CTCP messages
-and then return a list with two elements: the line without the ctcp messages
+and then return a list with two elements: the line without the CTCP messages
 and an array reference which contains array references of CTCP messages.
 Those CTCP message array references will have the CTCP message tag as
 first element (eg. "VERSION") and the rest of the CTCP message as the second
@@ -196,8 +210,8 @@ sub decode_ctcp {
 
 =item B<encode_ctcp (@msg)>
 
-This function encodes a ctcp message for the trailing part of a NOTICE
-or PRIVMSG. C<@msg> is an array of strings or array references.
+This function encodes a CTCP message for the transmission via the NOTICE
+or PRIVMSG command. C<@msg> is an array of strings or array references.
 If an array reference occurs in the C<@msg> array it's first
 element will be interpreted as CTCP TAG (eg. one of PING, VERSION, .. whatever)
 the rest of the array ref will be appended to the tag and seperated by

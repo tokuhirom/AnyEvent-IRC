@@ -20,20 +20,6 @@ AnyEvent::IRC::Client::Connection - A highlevel IRC connection
    my $timer;
    my $con = new AnyEvent::IRC::Client::Connection;
 
-   $con->reg_cb (registered => sub { print "I'm in!\n"; 0 });
-   $con->reg_cb (disconnect => sub { print "I'm out!\n"; 0 });
-   $con->reg_cb (
-      sent => sub {
-         if ($_[2] eq 'PRIVMSG') {
-            print "Sent message!\n";
-            $timer = AnyEvent->timer (after => 1, cb => sub { $c->broadcast });
-         }
-         1
-      }
-   );
-
-   $con->send_srv (PRIVMSG => "Hello there i'm the cool AnyEvent::IRC test script!", 'elmex');
-
    $con->reg_cb (connect => sub {
       my ($con, $err) = @_;
       if (defined $err) {
@@ -43,6 +29,18 @@ AnyEvent::IRC::Client::Connection - A highlevel IRC connection
 
       $con->register (qw/testbot testbot testbot/);
    });
+   $con->reg_cb (registered => sub { print "I'm in!\n" });
+   $con->reg_cb (disconnect => sub { print "I'm out!\n" });
+   $con->reg_cb (
+      sent => sub {
+         if ($_[2] eq 'PRIVMSG') {
+            print "Sent message!\n";
+            $timer = AnyEvent->timer (after => 1, cb => sub { $c->broadcast });
+         }
+      }
+   );
+
+   $con->send_srv (PRIVMSG => 'elmex', "Hello there i'm the cool AnyEvent::IRC test script!");
 
    $c->wait;
    undef $timer;
@@ -274,9 +272,9 @@ sub register {
    $self->{real} = $real;
    $self->{server_pass} = $pass;
 
-   $self->send_msg (undef, "PASS", undef, $pass) if defined $pass;
-   $self->send_msg (undef, "NICK", undef, $nick);
-   $self->send_msg (undef, "USER", $real || $nick, $user || $nick, "*", "0");
+   $self->send_msg (undef, "PASS", $pass) if defined $pass;
+   $self->send_msg (undef, "NICK", $nick);
+   $self->send_msg (undef, "USER", $user || $nick, "*", "0", $real || $nick);
 }
 
 =item B<set_nick_change_cb $callback>
@@ -349,11 +347,13 @@ sub send_msg {
    $self->SUPER::send_msg (@a);
 }
 
-=item B<send_srv ($command, $trailing, @params)>
+=item B<send_srv ($command, @params)>
 
-This function sends an IRC message that is constructed by C<mk_msg (undef, $command, $trailing, @params)> (see L<AnyEvent::IRC::Util>).
-If the connection isn't yet registered (for example if the connection is slow) and hasn't got a
-welcome (IRC command 001) from the server yet, the IRC message is queued until it gets a welcome.
+This function sends an IRC message that is constructed by C<mk_msg (undef,
+$command, @params)> (see L<AnyEvent::IRC::Util>).  If the connection isn't yet
+registered (for example if the connection is slow) and hasn't got a welcome
+(IRC command 001) from the server yet, the IRC message is queued until it gets
+a welcome.
 
 =cut
 
@@ -728,7 +728,7 @@ sub change_nick_login_cb {
       }
 
       $self->{nick} = $newnick;
-      $self->send_msg (undef, "NICK", undef, $newnick);
+      $self->send_msg (undef, "NICK", $newnick);
    }
 }
 

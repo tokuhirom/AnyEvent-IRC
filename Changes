@@ -1,9 +1,5 @@
 Revision history for AnyEvent::IRC
 
-0.7
-	- Renamed from Net::IRC3 to AnyEvent::IRC
-        - Using Object::Event, AnyEvent::Socket and AnyEvent::Handle
-
 0.6
         - deprecated this module, use AnyEvent::IRC in future!
         - connect is done non blocking
@@ -15,6 +11,11 @@ Revision history for AnyEvent::IRC
         - added CTCP support
         - implemented automatic pinging (on user request)
           see Net::IRC3::Client::Connection::enable_ping
+        - Changed mk_msg, send_msg and send_srv and parse_irc_msg considerably,
+          no reversed arguments anymore!
+        - Added support for ISUPPORT and CASEMAPPING
+	- Renamed from Net::IRC3 to AnyEvent::IRC
+        - Using Object::Event, AnyEvent::Socket and AnyEvent::Handle
 
 0.5     Sun Mar 11 23:54:10 CET 2007
         - added server password support

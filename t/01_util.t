@@ -1,7 +1,7 @@
 #!perl
 use strict;
 use Test::More;
-use Net::IRC3::Util
+use AnyEvent::IRC::Util
    qw/parse_irc_msg mk_msg split_prefix rfc_code_to_name
       prefix_nick prefix_user prefix_host filter_colors/;
 
@@ -12,7 +12,6 @@ our @ircmsg_tests = (
          prefix_ar => ['nick', 'user', 'host'],
          command   => 'PRIVMSG',
          params    => ['#test', 'test message'],
-         trailing  => 'test message'
       }
    ],
    ['without prefix' =>
@@ -20,7 +19,6 @@ our @ircmsg_tests = (
           prefix   => undef,
           command  => 'PART',
           params   => ['#test', 'i\'m gone'],
-          trailing => 'i\'m gone'
       }
    ],
    ['without params' =>
@@ -28,7 +26,6 @@ our @ircmsg_tests = (
          prefix   => undef,
          command  => 'QUIT',
          params   => [],
-         trailing => undef,
       }
    ],
 );
@@ -43,7 +40,7 @@ our @ircmodes = (
 );
 
 plan tests =>
-   (5 * scalar @ircmsg_tests)
+   (4 * scalar @ircmsg_tests)
    + (6 * scalar grep { $_->[2]->{prefix} } @ircmsg_tests)
    + scalar @ircmodes
    + 3;
@@ -77,8 +74,6 @@ plan tests =>
       }
 
       ok ($params_ok, "$name: message params");
-
-      ok (undef_or_eq ($cmp->{trailing}, $msg->{trailing}), "$name: message trailing");
    }
 
    for (@ircmsg_tests) {
@@ -93,9 +88,8 @@ plan tests =>
       my $msg  = $_->[1];
       my $pmsg = parse_irc_msg ($msg);
       my @params = @{$pmsg->{params}};
-      pop @params if $pmsg->{trailing};
       my $omsg =
-         mk_msg ($pmsg->{prefix}, $pmsg->{command}, $pmsg->{trailing}, @params);
+         mk_msg ($pmsg->{prefix}, $pmsg->{command}, @params);
 
       is ($omsg, $msg, "$name: message parse and making succeed");
    }

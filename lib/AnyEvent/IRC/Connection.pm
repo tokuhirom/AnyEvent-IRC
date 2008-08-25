@@ -17,7 +17,7 @@ AnyEvent::IRC::Connection - An IRC connection abstraction
 =head1 SYNOPSIS
 
    #...
-   $con->send_msg (undef, "PRIVMSG", "Hello there!", "yournick");
+   $con->send_msg (undef, "PRIVMSG", "yournick", "Hello there!");
    #...
 
 =head1 DESCRIPTION
