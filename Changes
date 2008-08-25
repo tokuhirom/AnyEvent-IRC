@@ -16,6 +16,7 @@ Revision history for AnyEvent::IRC
         - Added support for ISUPPORT and CASEMAPPING
 	- Renamed from Net::IRC3 to AnyEvent::IRC
         - Using Object::Event, AnyEvent::Socket and AnyEvent::Handle
+        - added buffer_empty event, to detect when the write buffer is empty.
 
 0.5     Sun Mar 11 23:54:10 CET 2007
         - added server password support
