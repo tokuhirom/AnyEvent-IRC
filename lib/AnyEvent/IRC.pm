@@ -152,6 +152,10 @@ L<http://search.cpan.org/dist/Net-IRC3>
 
 Thanks to Marc Lehmann for the new AnyEvent module!
 
+And these people have helped to work on L<AnyEvent::IRC>:
+
+   * Maximilian Gaß - Added support for ISUPPORT and CASEMAPPING
+
 =head1 COPYRIGHT & LICENSE
 
 Copyright 2006 Robin Redeker, all rights reserved.

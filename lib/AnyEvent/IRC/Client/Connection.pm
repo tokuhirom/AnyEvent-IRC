@@ -401,11 +401,11 @@ with a memory leak.
 sub send_chan {
    my ($self, $chan, @msg) = @_;
 
-   if ($self->{channel_list}->{$self->lc($chan)}) {
+   if ($self->{channel_list}->{$self->lower_case ($chan)}) {
       $self->send_msg (undef, @msg);
 
    } else {
-      push @{$self->{chan_queue}->{$self->lc ($chan)}}, \@msg;
+      push @{$self->{chan_queue}->{$self->lower_case ($chan)}}, \@msg;
    }
 }
 
@@ -417,7 +417,7 @@ Clears the channel queue of the channel C<$channel>.
 
 sub clear_chan_queue {
    my ($self, $chan) = @_;
-   $self->{chan_queue}->{$self->lc ($chan)} = [];
+   $self->{chan_queue}->{$self->lower_case ($chan)} = [];
 }
 
 =item B<enable_ping ($interval, $cb)>
@@ -464,7 +464,7 @@ the IRC server. If none was sent, the default - rfc1459 - will be used.
 
 =cut
 
-sub lc {
+sub lower_case {
    my($self, $str) = @_;
    $_ = $str;
    $self->{casemap_func}->();
@@ -494,7 +494,7 @@ sub isupport {
 
 sub _was_me {
    my ($self, $msg) = @_;
-   $self->lc (prefix_nick ($msg)) eq $self->lc ($self->nick ())
+   $self->lower_case (prefix_nick ($msg)) eq $self->lower_case ($self->nick ())
 }
 
 ################################################################################
@@ -505,12 +505,12 @@ sub channel_remove_event_cb {
    my ($self, $msg, $chan, @nicks) = @_;
 
    for my $nick (@nicks) {
-      if ($self->lc ($nick) eq $self->lc ($self->nick ())) {
-         delete $self->{chan_queue}->{$self->lc ($chan)};
-         delete $self->{channel_list}->{$self->lc ($chan)};
+      if ($self->lower_case ($nick) eq $self->lower_case ($self->nick ())) {
+         delete $self->{chan_queue}->{$self->lower_case ($chan)};
+         delete $self->{channel_list}->{$self->lower_case ($chan)};
          last;
       } else {
-         delete $self->{channel_list}->{$self->lc ($chan)}->{$nick};
+         delete $self->{channel_list}->{$self->lower_case ($chan)}->{$nick};
       }
    }
 
@@ -521,20 +521,20 @@ sub channel_add_event_cb {
    my ($self, $msg, $chan, @nicks) = @_;
 
    for my $nick (@nicks) {
-      if ($self->lc ($nick) eq $self->lc ($self->nick ())) {
-         for (@{$self->{chan_queue}->{$self->lc ($chan)}}) {
+      if ($self->lower_case ($nick) eq $self->lower_case ($self->nick ())) {
+         for (@{$self->{chan_queue}->{$self->lower_case ($chan)}}) {
             $self->send_msg (undef, @$_);
          }
          $self->clear_chan_queue ($chan);
       }
 
-      $self->{channel_list}->{$self->lc ($chan)}->{$nick} = 1;
+      $self->{channel_list}->{$self->lower_case ($chan)}->{$nick} = 1;
    }
 }
 
 sub _filter_new_nicks_from_channel {
    my ($self, $chan, @nicks) = @_;
-   grep { not exists $self->{channel_list}->{$self->lc ($chan)}->{$_} } @nicks;
+   grep { not exists $self->{channel_list}->{$self->lower_case ($chan)}->{$_} } @nicks;
 }
 
 sub anymsg_cb {
@@ -721,7 +721,7 @@ sub change_nick_login_cb {
    } else {
       my $newnick = $self->{nick_change}->($self->nick);
 
-      if ($self->lc ($newnick) eq $self->lc ($self->{nick})) {
+      if ($self->lower_case ($newnick) eq $self->lower_case ($self->{nick})) {
          $self->disconnect;
          return 0;
       }
