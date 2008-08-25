@@ -2,7 +2,6 @@
 use strict;
 use Event;
 use AnyEvent::IRC::Client::Connection;
-$AnyEvent::IRC::Client::Connection::DEBUG = 1;
 
 my $c = AnyEvent->condvar;
 

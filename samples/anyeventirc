@@ -3,7 +3,6 @@ use strict;
 use AnyEvent::Impl::Perl;
 use AnyEvent;
 use AnyEvent::IRC::Connection;
-$AnyEvent::IRC::Client::DEBUG = 1;
 
 my $c = AnyEvent->condvar;
 
