@@ -149,6 +149,10 @@ sub send_raw {
 sub _send_raw {
    my ($self, $data) = @_;
 
+   unless ($self->{socket}) {
+      die "Couldn't write to socket: Not connected!";
+   }
+
    $self->{socket}->push_write ($data);
 }
 
