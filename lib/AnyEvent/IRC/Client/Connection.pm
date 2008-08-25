@@ -593,9 +593,10 @@ sub welcome_cb {
 
 sub isupport_cb {
    my ($self, $msg) = @_;
+
    foreach (@{$msg->{params}}) {
-      if (/([A-Z]+)=(.+)/) {
-         $self->{isupport}->{$1} = $2;
+      if (/([A-Z]+)(?:=(.+))?/) {
+         $self->{isupport}->{$1} = defined $2 ? $2 : 1;
       }
    }
 
