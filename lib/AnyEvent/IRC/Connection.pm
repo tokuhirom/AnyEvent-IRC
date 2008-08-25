@@ -158,7 +158,7 @@ sub _send_raw {
 
 =item B<send_msg (@ircmsg)>
 
-This function sends a message to the server. C<@ircmsg> is the argumentlist
+This function sends a message to the server. C<@ircmsg> is the argument list
 for C<AnyEvent::IRC::Util::mk_msg>.
 
 =cut
