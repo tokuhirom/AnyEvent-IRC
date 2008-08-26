@@ -208,9 +208,9 @@ This constructor takes no arguments.
 =cut
 
 my %LOWER_CASEMAP = (
-   rfc1459 => sub { tr/A-Z[]\\\^/a-z{}|~/ },
+   rfc1459          => sub { tr/A-Z[]\\\^/a-z{}|~/ },
    'strict-rfc1459' => sub { tr/A-Z[]\\/a-z{}|/ },
-   ascii => sub { tr/A-Z/a-z/ },
+   ascii            => sub { tr/A-Z/a-z/ },
 );
 
 sub new {
@@ -218,7 +218,6 @@ sub new {
    my $class = ref($this) || $this;
    my $self = $class->SUPER::new (@_);
 
-   $self->reg_cb ('irc_*'     => \&debug_cb);
    $self->reg_cb (irc_001     => \&welcome_cb);
    $self->reg_cb (irc_005     => \&isupport_cb);
    $self->reg_cb (irc_join    => \&join_cb);
@@ -235,6 +234,7 @@ sub new {
    $self->reg_cb (irc_notice  => \&privmsg_cb);
 
    $self->reg_cb ('irc_*'     => \&anymsg_cb);
+   $self->reg_cb ('irc_*'     => \&debug_cb);
 
    $self->reg_cb (channel_remove => \&channel_remove_event_cb);
    $self->reg_cb (channel_add    => \&channel_add_event_cb);
