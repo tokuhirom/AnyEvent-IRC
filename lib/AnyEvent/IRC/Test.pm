@@ -3,7 +3,7 @@ use strict;
 no warnings;
 require Exporter;
 our @ISA = qw/Exporter/;
-our @EXPORT = qw/test_init test_start $CL/;
+our @EXPORT = qw/test_init test_plan test_start $CL/;
 
 use Test::More;
 use AnyEvent;
@@ -28,16 +28,16 @@ AnyEvent::IRC::Test - A test helper module
 =cut
 
 sub test_init {
-   my ($test_cnt) = @_;
+   my ($cnt) = @_;
 
    if ($ENV{ANYEVENT_IRC_MAINTAINER_TEST_SERVER}) {
       if ($ENV{ANYEVENT_IRC_MAINTAINER_TEST_SERVER} =~ /^([^:]+)(?::(\d+))?$/) {
          ($SERVER, $PORT) = ($1, $2 || 6667);
       }
-
-      plan tests => $test_cnt + 2;
+      plan tests => $cnt + 2;
    } else {
       plan skip_all => "maintainer tests disabled, env var ANYEVENT_IRC_MAINTAINER_TEST_SERVER not set.";
+      exit;
    }
 
    $CV = AnyEvent->condvar;
