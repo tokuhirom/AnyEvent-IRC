@@ -541,6 +541,17 @@ sub map_mode_to_prefix {
    return undef;
 }
 
+=item B<available_nick_modes ()>
+
+Returns a list of possible modes on this IRC server. (eg. 'o' for op).
+
+=cut
+
+sub available_nick_modes {
+   my ($self) = @_;
+   map { $self->map_prefix_to_mode ($_) } split //, $self->{prefix_chars}
+}
+
 ################################################################################
 # Private utility functions
 ################################################################################
