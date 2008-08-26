@@ -1,4 +1,4 @@
-package AnyEvent::IRC::Client::Connection;
+package AnyEvent::IRC::Client;
 use strict;
 no warnings;
 
@@ -8,17 +8,17 @@ use base AnyEvent::IRC::Connection::;
 
 =head1 NAME
 
-AnyEvent::IRC::Client::Connection - A highlevel IRC connection
+AnyEvent::IRC::Client - A highlevel IRC connection
 
 =head1 SYNOPSIS
 
    use AnyEvent;
-   use AnyEvent::IRC::Client::Connection;
+   use AnyEvent::IRC::Client;
 
    my $c = AnyEvent->condvar;
 
    my $timer;
-   my $con = new AnyEvent::IRC::Client::Connection;
+   my $con = new AnyEvent::IRC::Client;
 
    $con->reg_cb (connect => sub {
       my ($con, $err) = @_;
@@ -49,7 +49,7 @@ AnyEvent::IRC::Client::Connection - A highlevel IRC connection
 
 =head1 DESCRIPTION
 
-L<AnyEvent::IRC::Client::Connection> is a (nearly) highlevel client connection,
+L<AnyEvent::IRC::Client> is a (nearly) highlevel client connection,
 that manages all the stuff that noone wants to implement again and again
 when handling with IRC. For example it PONGs the server or keeps track
 of the users on a channel.
@@ -64,7 +64,7 @@ The case insensitivity of channel names and nicknames can lead to headaches
 when dealing with IRC in an automated client which tracks channels and nicknames.
 
 I tried to preserve the case in all channel and nicknames
-AnyEvent::IRC::Client::Connection passes to his user. But in the internal
+AnyEvent::IRC::Client passes to his user. But in the internal
 structures I'm using lower case for the channel names.
 
 The returned hash from C<channel_list> for example has the lower case of the
@@ -77,7 +77,7 @@ For example a user might joins #TeSt and parts #test later.
 
 =head1 EVENTS
 
-The following events are emitted by L<AnyEvent::IRC::Client::Connection>.
+The following events are emitted by L<AnyEvent::IRC::Client>.
 Use C<reg_cb> as described in L<Object::Event> to register to such an event.
 
 =over 4
@@ -761,7 +761,7 @@ sub topic_change_cb {
 
 =head1 EXAMPLES
 
-See samples/anyeventirccl and other samples in samples/ for some examples on how to use AnyEvent::IRC::Client::Connection.
+See samples/anyeventirccl and other samples in samples/ for some examples on how to use AnyEvent::IRC::Client.
 
 =head1 AUTHOR
 

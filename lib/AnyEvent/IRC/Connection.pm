@@ -226,7 +226,7 @@ This event is emitted when the write buffer of the underlying connection
 is empty and all data has been given to the kernel. See also C<samples/notify>
 about a usage example.
 
-Please note that this buffer is NOT the queue mentioned in L<AnyEvent::IRC::Client::Connection>!
+Please note that this buffer is NOT the queue mentioned in L<AnyEvent::IRC::Client>!
 
 =back
 
@@ -238,7 +238,7 @@ Robin Redeker, C<< <elmex@ta-sa.org> >>
 
 L<AnyEvent::IRC>
 
-L<AnyEvent::IRC::Client::Connection>
+L<AnyEvent::IRC::Client>
 
 =head1 COPYRIGHT & LICENSE
 

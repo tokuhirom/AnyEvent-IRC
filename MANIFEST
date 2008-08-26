@@ -4,7 +4,7 @@ README
 Makefile.PL
 lib/AnyEvent/IRC.pm
 lib/AnyEvent/IRC/Util.pm
-lib/AnyEvent/IRC/Client/Connection.pm
+lib/AnyEvent/IRC/Client.pm
 lib/AnyEvent/IRC/Connection.pm
 samples/test_connect
 samples/notify

@@ -1,11 +1,11 @@
 #!/usr/bin/env perl
 use strict;
 use Event;
-use AnyEvent::IRC::Client::Connection;
+use AnyEvent::IRC::Client;
 
 my $c = AnyEvent->condvar;
 
-my $pc = AnyEvent::IRC::Client::Connection->new;
+my $pc = AnyEvent::IRC::Client->new;
 
 $pc->connect ("irc.plan9.de", 6667);
 

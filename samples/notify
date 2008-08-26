@@ -1,10 +1,10 @@
 #!/usr/bin/env perl
 use AnyEvent;
-use AnyEvent::IRC::Client::Connection;
+use AnyEvent::IRC::Client;
 
 my $c = AnyEvent->condvar;
 
-my $con = new AnyEvent::IRC::Client::Connection;
+my $con = new AnyEvent::IRC::Client;
 
 $con->reg_cb (
    connect => sub {
