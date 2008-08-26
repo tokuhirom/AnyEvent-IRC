@@ -92,6 +92,7 @@ Emitted when C<@nicks> are added to the channel C<$channel>,
 this happens for example when someone JOINs a channel or when you
 get a RPL_NAMREPLY (see RFC2812).
 
+
 C<$msg> is the IRC message hash that as returned by C<parse_irc_msg>.
 
 =item B<channel_remove $msg, $channel @nicks>
@@ -236,8 +237,6 @@ sub new {
    $self->reg_cb ('irc_*'     => \&anymsg_cb);
    $self->reg_cb ('irc_*'     => \&debug_cb);
 
-   $self->reg_cb (channel_remove => \&channel_remove_event_cb);
-   $self->reg_cb (channel_add    => \&channel_add_event_cb);
    $self->reg_cb (disconnect     => \&disconnect_cb);
 
    $self->reg_cb (irc_437        => \&change_nick_login_cb);
@@ -335,6 +334,24 @@ NOTE: Future versions might preserve the case from the JOIN command to the chann
 sub channel_list {
    my ($self) = @_;
    return $self->{channel_list} || {};
+}
+
+=item B<nick_mode ($channel)>
+
+This returns the mode string (eg. 'o' if the user has op rights)
+for the channel C<$channe>.
+Returns undef if the channel isn't joined or the user is not on it.
+Returns an empty string if the user has no special mode set.
+
+=cut
+
+sub nick_mode {
+    my ($self, $channel, $nick) = @_;
+
+    my $l = $self->channel_list;
+    my $c = $l->{$self->lower_case ($channel)}
+       or return undef;
+    return $c->{$self->lower_case ($nick)};
 }
 
 =item B<send_msg (...)>
@@ -468,7 +485,7 @@ the IRC server. If none was sent, the default - rfc1459 - will be used.
 
 sub lower_case {
    my($self, $str) = @_;
-   $_ = $str;
+   local $_ = $str;
    $self->{casemap_func}->();
    return $_;
 }
@@ -490,7 +507,7 @@ sub isupport {
    }
 }
 
-=item B<nick_mode ($prefixed_nick)>
+=item B<split_nick_mode ($prefixed_nick)>
 
 This method splits the C<$prefix_nick> (eg. '+elmex') up into the
 mode of the user and the nickname. The returned mode will be the corresponding
@@ -500,7 +517,7 @@ This method returns 2 values: the mode and the nickname.
 
 =cut
 
-sub nick_mode {
+sub split_nick_mode {
    my ($self, $prefixed_nick) = @_;
 
    my $pchrs = $self->{prefix_chars};
@@ -565,10 +582,10 @@ sub _was_me {
 # Callbacks
 ################################################################################
 
-sub channel_remove_event_cb {
-   my ($self, $msg, $chan, @nicks) = @_;
+sub channel_remove {
+   my ($self, $msg, $chan, $nicks) = @_;
 
-   for my $nick (@nicks) {
+   for my $nick (@$nicks) {
       if ($self->lower_case ($nick) eq $self->lower_case ($self->nick ())) {
          delete $self->{chan_queue}->{$self->lower_case ($chan)};
          delete $self->{channel_list}->{$self->lower_case ($chan)};
@@ -577,14 +594,16 @@ sub channel_remove_event_cb {
          delete $self->{channel_list}->{$self->lower_case ($chan)}->{$nick};
       }
    }
-
-   1;
 }
 
-sub channel_add_event_cb {
-   my ($self, $msg, $chan, @nicks) = @_;
+sub channel_add {
+   my ($self, $msg, $chan, $nicks, $modes) = @_;
 
-   for my $nick (@nicks) {
+   my @mods = @$modes;
+
+   for my $nick (@$nicks) {
+      my $mode = shift @mods;
+
       if ($self->lower_case ($nick) eq $self->lower_case ($self->nick ())) {
          for (@{$self->{chan_queue}->{$self->lower_case ($chan)}}) {
             $self->send_msg (@$_);
@@ -592,7 +611,13 @@ sub channel_add_event_cb {
          $self->clear_chan_queue ($chan);
       }
 
-      $self->{channel_list}->{$self->lower_case ($chan)}->{$nick} = 1;
+      my $ch = $self->{channel_list}->{$self->lower_case ($chan)};
+
+      if (defined $mode) {
+         $ch->{$nick} = $mode;
+      } else {
+         $ch->{$nick} = '' unless defined $ch->{$nick};
+      }
    }
 }
 
@@ -731,12 +756,13 @@ sub namereply_cb {
 sub endofnames_cb {
    my ($self, $msg) = @_;
    my $chan = $msg->{params}->[1];
-   my @nicks =
-      $self->_filter_new_nicks_from_channel (
-         $chan, map { s/^[~@\+%&]//; $_ } @{delete $self->{_tmp_namereply}}
-      );
+   my @names_result = @{delete $self->{_tmp_namereply}};
+   my @nicks = map { ($self->split_nick_mode ($_))[1] } @names_result;
+   my @modes = map { ($self->split_nick_mode ($_))[0] } @names_result;
+   my @new_nicks = $self->_filter_new_nicks_from_channel ($chan, @nicks);
 
-   $self->event (channel_add => $msg, $chan, @nicks) if @nicks;
+   $self->channel_add ($msg, $chan, \@nicks, \@modes);
+   $self->event (channel_add => $msg, $chan, @new_nicks) if @nicks;
 }
 
 sub join_cb {
@@ -744,6 +770,7 @@ sub join_cb {
    my $chan = $msg->{params}->[0];
    my $nick = prefix_nick ($msg);
 
+   $self->channel_add ($msg, $chan, [$nick], [undef]);
    $self->event (channel_add => $msg, $chan, $nick);
    $self->event (join        => $nick, $chan, $self->_was_me ($msg));
 }
@@ -754,6 +781,7 @@ sub part_cb {
    my $nick = prefix_nick ($msg);
 
    $self->event (part           => $nick, $chan, $self->_was_me ($msg), $msg->{params}->[1]);
+   $self->channel_remove ($msg, $chan, [$nick]);
    $self->event (channel_remove => $msg, $chan, $nick);
 }
 
@@ -763,6 +791,7 @@ sub kick_cb {
    my $kicked_nick = $msg->{params}->[1];
 
    $self->event (kick           => $kicked_nick, $chan, $self->_was_me ($msg), $msg->{params}->[1]);
+   $self->channel_remove ($msg, $chan, [$kicked_nick]);
    $self->event (channel_remove => $msg, $chan, $kicked_nick);
 }
 
@@ -773,8 +802,10 @@ sub quit_cb {
    $self->event (quit => $nick, $msg->{params}->[1]);
 
    for (keys %{$self->{channel_list}}) {
-      $self->event (channel_remove => $msg, $_, $nick)
-         if $self->{channel_list}->{$_}->{$nick};
+      if ($self->{channel_list}->{$_}->{$nick}) {
+         $self->channel_remove ($msg, $_, [$nick]);
+         $self->event (channel_remove => $msg, $_, $nick);
+      }
    }
 }
 
@@ -806,6 +837,7 @@ sub disconnect_cb {
    my ($self) = @_;
 
    for (keys %{$self->{channel_list}}) {
+      $self->channel_remove (undef, $_, [$self->nick]);
       $self->event (channel_remove => undef, $_, $self->nick)
    }
 }
