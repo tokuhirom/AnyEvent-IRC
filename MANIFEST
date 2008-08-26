@@ -5,6 +5,7 @@ Makefile.PL
 lib/AnyEvent/IRC.pm
 lib/AnyEvent/IRC/Util.pm
 lib/AnyEvent/IRC/Client.pm
+lib/AnyEvent/IRC/Test.pm
 lib/AnyEvent/IRC/Connection.pm
 samples/test_connect
 samples/notify
@@ -12,3 +13,4 @@ samples/anyeventirccl
 samples/anyeventirc
 t/00_load.t
 t/01_util.t
+t/02_prefix_mode_map.t

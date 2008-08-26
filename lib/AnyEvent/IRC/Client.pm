@@ -246,8 +246,10 @@ sub new {
    $self->reg_cb (irc_332        => \&rpl_topic_cb);
    $self->reg_cb (irc_topic      => \&topic_change_cb);
 
-   $self->{isupport} = {};
+   $self->{isupport}     = { };
    $self->{casemap_func} = $LOWER_CASEMAP{rfc1459};
+   $self->{prefix_chars} = '@+';
+   $self->{prefix2mode}  = { '@' => 'o', '+' => 'v' };
    $self->{def_nick_change} = $self->{nick_change} =
       sub {
          my ($old_nick) = @_;
@@ -457,7 +459,7 @@ sub enable_ping {
       });
 }
 
-=item B<lc ($str)>
+=item B<lower_case ($str)>
 
 Converts the given string to lowercase according to CASEMAPPING setting given by
 the IRC server. If none was sent, the default - rfc1459 - will be used.
@@ -486,6 +488,57 @@ sub isupport {
    } else {
       return $self->{isupport};
    }
+}
+
+=item B<nick_mode ($prefixed_nick)>
+
+This method splits the C<$prefix_nick> (eg. '+elmex') up into the
+mode of the user and the nickname. The returned mode will be the corresponding
+mode character instead of the prefix.
+
+This method returns 2 values: the mode and the nickname.
+
+=cut
+
+sub nick_mode {
+   my ($self, $prefixed_nick) = @_;
+
+   my $pchrs = $self->{prefix_chars};
+
+   if ($prefixed_nick =~ /^([$pchrs])(.+)$/) {
+      my ($p, $nick) = ($1, $2);
+      return ($self->map_prefix_to_mode ($p), $nick);
+   }
+
+   return ('', $prefixed_nick);
+}
+
+=item B<map_prefix_to_mode ($prefix)>
+
+Maps the nick prefix (eg. '@') to the corresponding mode (eg. 'o').
+Returns undef if no such prefix exists (on the connected server).
+
+=cut
+
+sub map_prefix_to_mode {
+   my ($self, $prefix) = @_;
+   $self->{prefix2mode}->{$prefix}
+}
+
+=item B<map_mode_to_prefix ($mode)>
+
+Maps the nick mode (eg. 'o') to the corresponding prefix (eg. '@').
+Returns undef if no such mode exists (on the connected server).
+
+=cut
+
+sub map_mode_to_prefix {
+   my ($self, $mode) = @_;
+   for (keys %{$self->{prefix2mode}}) {
+      return $_ if $self->{prefix2mode}->{$_} eq $mode;
+   }
+
+   return undef;
 }
 
 ################################################################################
@@ -605,6 +658,18 @@ sub isupport_cb {
          $self->{casemap_func} = $func;
       } else {
          $self->{casemap_func} = $LOWER_CASEMAP{rfc1459};
+      }
+   }
+
+   if (defined (my $nick_prefixes = $self->{isupport}->{PREFIX})) {
+      if ($nick_prefixes =~ /^\(([^)]+)\)(.+)$/) {
+         my ($modes, $prefixes) = ($1, $2);
+         $self->{prefix_chars} = $prefixes;
+         my @prefixes = split //, $prefixes;
+         $self->{prefix2mode} = { };
+         for (split //, $modes) {
+            $self->{prefix2mode}->{shift @prefixes} = $_;
+         }
       }
    }
 }
