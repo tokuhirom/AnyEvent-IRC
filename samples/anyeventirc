@@ -23,7 +23,7 @@ $con->reg_cb ('sent'  => sub { shift; warn "DEBUG SENT: " . join ('|', @_) . "\n
 # we register now a callback on our self defined event
 $con->reg_cb (welcome => sub {
    my ($con) = @_;
-   $con->send_msg (undef, "PRIVMSG", "elmex", "Hi!!!");
+   $con->send_msg ("PRIVMSG", "elmex", "Hi!!!");
 });
 
 my $t;
@@ -44,8 +44,8 @@ $con->reg_cb (
       }
 
       # send IRC registration
-      $con->send_msg (undef, "NICK", $nick);
-      $con->send_msg (undef, "USER", $user || $nick, "*", "0", $real || $nick);
+      $con->send_msg ("NICK", $nick);
+      $con->send_msg ("USER", $user || $nick, "*", "0", $real || $nick);
    },
    disconnect => sub {
       warn "Oh, got a disconnect: $_[1], exiting...\n";

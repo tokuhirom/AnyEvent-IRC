@@ -12,8 +12,8 @@ $con->reg_cb (
    connect => sub {
       my ($con) = @_;
 
-      $con->send_msg (undef, NICK => "testbot");
-      $con->send_msg (undef, USER => "testbot", '*', '0', 'testbot');
+      $con->send_msg (NICK => "testbot");
+      $con->send_msg (USER => "testbot", '*', '0', 'testbot');
    },
    irc_001 => sub {
       my ($con, $msg) = @_;
