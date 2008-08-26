@@ -146,17 +146,12 @@ further processing done.
 
 sub send_raw {
    my ($self, $ircline) = @_;
-   $self->_send_raw ("$ircline\015\012");
-}
-
-sub _send_raw {
-   my ($self, $data) = @_;
 
    unless ($self->{socket}) {
       die "Couldn't write to socket: Not connected!";
    }
 
-   $self->{socket}->push_write ($data);
+   $self->{socket}->push_write ($ircline . "\015\012");
 }
 
 =item B<send_msg ($command, @params)>
@@ -170,7 +165,7 @@ sub send_msg {
    my ($self, @msg) = @_;
 
    $self->event (sent => @msg);
-   $self->_send_raw (mk_msg (undef, @msg));
+   $self->send_raw (mk_msg (undef, @msg));
 }
 
 sub _feed_irc_data {
