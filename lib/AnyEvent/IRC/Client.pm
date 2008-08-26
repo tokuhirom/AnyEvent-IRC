@@ -167,14 +167,14 @@ Emitted when the nickname C<$nick> QUITs with the message C<$msg>.
 Emitted for NOTICE and PRIVMSG where the target C<$channel> is a channel.
 C<$ircmsg> is the original IRC message hash like it is returned by C<parse_irc_msg>.
 
-The trailing part of the C<$ircmsg> will have all CTCP messages stripped off.
+The last parameter of the C<$ircmsg> will have all CTCP messages stripped off.
 
 =item B<privatemsg $nick $ircmsg>
 
 Emitted for NOTICE and PRIVMSG where the target C<$nick> (most of the time you) is a nick.
 C<$ircmsg> is the original IRC message hash like it is returned by C<parse_irc_msg>.
 
-The trailing part of the C<$ircmsg> will have all CTCP messages stripped off.
+The last parameter of the C<$ircmsg> will have all CTCP messages stripped off.
 
 =item B<error $code $message $ircmsg>
 
@@ -187,7 +187,7 @@ name from the RFC 2812. eg.:
 
    rfc_code_to_name ('471') => 'ERR_CHANNELISFULL'
 
-=item B<debug_send $prefix $command $trailing @params>
+=item B<debug_send $prefix $command @params>
 
 Is emitted everytime some command is sent.
 
@@ -551,23 +551,23 @@ sub anymsg_cb {
    {
       $self->event (statmsg => $msg);
    } elsif ($cmd >= 400 and $cmd <= 599) {
-      $self->event (error => $msg->{command}, $msg->{trailing}, $msg);
+      $self->event (error => $msg->{command}, $msg->{params}->[-1], $msg);
    }
 }
 
 sub privmsg_cb {
    my ($self, $msg) = @_;
 
-   my ($trail, $ctcp) = decode_ctcp ($msg->{trailing});
+   my ($trail, $ctcp) = decode_ctcp ($msg->{params}->[-1]);
 
    for (@$ctcp) {
       $self->event (ctcp => prefix_nick ($msg), $msg->{params}->[0], $_->[0], $_->[1], $msg->{command});
       $self->event ("ctcp_".lc ($_->[0]), prefix_nick ($msg), $msg->{params}->[0], $_->[1], $msg->{command});
    }
 
-   $msg->{trailing} = $trail;
+   $msg->{params}->[-1] = $trail;
 
-   if ($msg->{trailing} ne '') {
+   if ($msg->{params}->[-1] ne '') {
       my $targ = $msg->{params}->[0];
       if ($targ =~ m/^(?:[#+&]|![A-Z0-9]{5})/) {
          $self->event (publicmsg => $targ, $msg);
@@ -633,8 +633,7 @@ sub nick_cb {
    for my $channame (keys %{$self->{channel_list}}) {
       my $chan = $self->{channel_list}->{$channame};
       if (exists $chan->{$nick}) {
-         delete $chan->{$nick};
-         $chan->{$newnick} = 1;
+         $chan->{$newnick} = delete $chan->{$nick};
 
          push @chans, $channame;
       }
@@ -649,7 +648,7 @@ sub nick_cb {
 
 sub namereply_cb {
    my ($self, $msg) = @_;
-   my @nicks = split / /, $msg->{trailing};
+   my @nicks = split / /, $msg->{params}->[-1];
    push @{$self->{_tmp_namereply}}, @nicks;
 }
 
@@ -738,7 +737,7 @@ sub disconnect_cb {
 sub rpl_topic_cb {
    my ($self, $msg) = @_;
    my $chan  = $msg->{params}->[1];
-   my $topic = $msg->{trailing};
+   my $topic = $msg->{params}->[-1];
 
    $self->event (channel_topic => $chan, $topic);
 }
@@ -747,7 +746,7 @@ sub topic_change_cb {
    my ($self, $msg) = @_;
    my $who   = prefix_nick ($msg);
    my $chan  = $msg->{params}->[0];
-   my $topic = $msg->{trailing};
+   my $topic = $msg->{params}->[-1];
 
    $self->event (channel_topic => $chan, $topic, $who);
 }
