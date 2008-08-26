@@ -35,7 +35,7 @@ sub test_init {
          ($SERVER, $PORT) = ($1, $2 || 6667);
       }
 
-      plan tests => $test_cnt + 1;
+      plan tests => $test_cnt + 2;
    } else {
       plan skip_all => "maintainer tests disabled, env var ANYEVENT_IRC_MAINTAINER_TEST_SERVER not set.";
    }
