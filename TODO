@@ -4,6 +4,7 @@
 - fix channel case in Net::IRC3::Client::Connection
 - add mode info to nicknames?
 - add mode command handling?
+- add mode tracking for nicknames on channels, by evaluating PREFIX
 - add TOPIC support
 - rework channel framework => make some real objects
 - add support for KILL!
