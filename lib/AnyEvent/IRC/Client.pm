@@ -272,9 +272,9 @@ sub register {
    $self->{real} = $real;
    $self->{server_pass} = $pass;
 
-   $self->send_msg (undef, "PASS", $pass) if defined $pass;
-   $self->send_msg (undef, "NICK", $nick);
-   $self->send_msg (undef, "USER", $user || $nick, "*", "0", $real || $nick);
+   $self->send_msg ("PASS", $pass) if defined $pass;
+   $self->send_msg ("NICK", $nick);
+   $self->send_msg ("USER", $user || $nick, "*", "0", $real || $nick);
 }
 
 =item B<set_nick_change_cb $callback>
@@ -361,7 +361,7 @@ sub send_srv {
    my ($self, @msg) = @_;
 
    if ($self->registered) {
-      $self->send_msg (undef, @msg);
+      $self->send_msg (@msg);
 
    } else {
       push @{$self->{con_queue}}, \@msg;
@@ -402,7 +402,7 @@ sub send_chan {
    my ($self, $chan, @msg) = @_;
 
    if ($self->{channel_list}->{$self->lower_case ($chan)}) {
-      $self->send_msg (undef, @msg);
+      $self->send_msg (@msg);
 
    } else {
       push @{$self->{chan_queue}->{$self->lower_case ($chan)}}, \@msg;
@@ -523,7 +523,7 @@ sub channel_add_event_cb {
    for my $nick (@nicks) {
       if ($self->lower_case ($nick) eq $self->lower_case ($self->nick ())) {
          for (@{$self->{chan_queue}->{$self->lower_case ($chan)}}) {
-            $self->send_msg (undef, @$_);
+            $self->send_msg (@$_);
          }
          $self->clear_chan_queue ($chan);
       }
@@ -584,7 +584,7 @@ sub welcome_cb {
    $self->{registered} = 1;
 
    for (@{$self->{con_queue}}) {
-      $self->send_msg (undef, @$_);
+      $self->send_msg (@$_);
    }
    $self->clear_srv_queue ();
 
@@ -612,7 +612,7 @@ sub isupport_cb {
 
 sub ping_cb {
    my ($self, $msg) = @_;
-   $self->send_msg (undef, "PONG", $msg->{params}->[0]);
+   $self->send_msg ("PONG", $msg->{params}->[0]);
 }
 
 sub pong_cb {
@@ -706,11 +706,6 @@ sub quit_cb {
 sub debug_cb {
    my ($self, $msg) = @_;
    $self->event (debug_recv => $msg);
-   #print "$self->{h}:$self->{p} > ";
-   #print (join " ", map { $_ => $msg->{$_} } grep { $_ ne 'params' } sort keys %$msg);
-   #print " params:";
-   #print (join ",", @{$msg->{params}});
-   #print "\n";
 }
 
 sub change_nick_login_cb {
@@ -728,7 +723,7 @@ sub change_nick_login_cb {
       }
 
       $self->{nick} = $newnick;
-      $self->send_msg (undef, "NICK", $newnick);
+      $self->send_msg ("NICK", $newnick);
    }
 }
 

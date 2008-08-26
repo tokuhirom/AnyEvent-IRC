@@ -31,8 +31,8 @@ Using the simplistic L<AnyEvent::IRC::Connection>:
    $con->connect ("localhost", 6667);
 
    $con->reg_cb (irc_001 => sub { print "$_[1]->{prefix} says i'm in the IRC: $_[1]->{trailing}!\n"; $c->broadcast; 0 });
-   $con->send_msg (undef, NICK => undef, "testbot");
-   $con->send_msg (undef, USER => 'testbot', "testbot", '*', '0');
+   $con->send_msg (NICK => undef, "testbot");
+   $con->send_msg (USER => 'testbot', "testbot", '*', '0');
 
    $c->wait;
 
