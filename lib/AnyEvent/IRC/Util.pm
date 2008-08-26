@@ -52,52 +52,36 @@ The parameters to the IRC command in a array reference,
 this includes the trailing parameter (the one after the ':' or
 the 14th parameter).
 
-=item trailing
-
-This is set if there was a trailing parameter (the one after the ':' or
-the 14th parameter).
-
 =back
 
 =cut
 
 sub parse_irc_msg {
-  my ($msg) = @_;
+   my ($msg) = @_;
 
-  my $cmd;
-  my $pref;
-  my $t;
-  my @a;
+   $msg =~ s/^(?::([^ ]+)[ ])?([A-Za-z]+|\d{3})//
+      or return undef;
+   my %msg;
+   ($msg{prefix}, $msg{command}, $msg{params}) = ($1, $2, []);
 
-  my $p = $msg =~ s/^(:([^ ]+)[ ])?([A-Za-z]+|\d{3})//;
-  $pref = $2;
-  $cmd = $3;
+   my $cnt = 0;
+   while ($msg =~ s/^[ ]([^ :\015\012\0][^ \015\012\0]*)//) {
+      push @{$msg{params}}, $1 if defined $1;
+      last if ++$cnt > 13;
+   }
 
-  my $i = 0;
+   if ($cnt == 14) {
+      if ($msg =~ s/^[ ]:?([^\015\012\0]*)//) {
+         push @{$msg{params}}, $1 if defined $1;
+      }
 
-  while ($msg =~ s/^[ ]([^ :\015\012\0][^ \015\012\0]*)//) {
+   } else {
+      if ($msg =~ s/^[ ]:([^\015\012\0]*)//) {
+         push @{$msg{params}}, $1 if defined $1;
+      }
+   }
 
-    push @a, $1 if defined $1;
-    if (++$i > 13) { last; }
-  }
-
-  if ($i == 14) {
-
-    if ($msg =~ s/^[ ]:?([^\015\012\0]*)//) {
-      $t = $1 if $1 ne "";
-    }
-
-  } else {
-
-    if ($msg =~ s/^[ ]:([^\015\012\0]*)//) {
-      $t = $1 if $1 ne "";
-    }
-  }
-
-  push @a, $t if defined $t;
-
-  my $m = { prefix => $pref, command => $cmd, params => \@a };
-  return $p ? $m : undef;
+   \%msg
 }
 
 =item B<mk_msg ($prefix, $command, @params)>
