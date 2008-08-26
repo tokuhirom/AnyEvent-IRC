@@ -159,10 +159,10 @@ sub _send_raw {
    $self->{socket}->push_write ($data);
 }
 
-=item B<send_msg (@ircmsg)>
+=item B<send_msg ($command, @params)>
 
 This function sends a message to the server. C<@ircmsg> is the argument list
-for C<AnyEvent::IRC::Util::mk_msg>.
+for C<AnyEvent::IRC::Util::mk_msg (undef, $command, @params)>.
 
 =cut
 
@@ -170,7 +170,7 @@ sub send_msg {
    my ($self, @msg) = @_;
 
    $self->event (sent => @msg);
-   $self->_send_raw (mk_msg (@msg));
+   $self->_send_raw (mk_msg (undef, @msg));
 }
 
 sub _feed_irc_data {
