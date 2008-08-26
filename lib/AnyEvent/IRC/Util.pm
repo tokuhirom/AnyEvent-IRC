@@ -120,7 +120,7 @@ sub mk_msg {
   $msg .= "$command";
 
   my $trail;
-  if (@params && $params[-1] =~ /\x20/) {
+  if (@params && ($params[-1] =~ /\x20/ || $params[-1] =~ /^:/)) {
      $trail = pop @params;
   }
 

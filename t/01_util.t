@@ -14,6 +14,14 @@ our @ircmsg_tests = (
          params    => ['#test', 'test message'],
       }
    ],
+   ['quoted colon' =>
+      ":nick!user\@host PRIVMSG #test ::)\015\012" => {
+         prefix    => 'nick!user@host',
+         prefix_ar => ['nick', 'user', 'host'],
+         command   => 'PRIVMSG',
+         params    => ['#test', ':)'],
+      }
+   ],
    ['without prefix' =>
       "PART #test :i'm gone\015\012" => {
           prefix   => undef,
