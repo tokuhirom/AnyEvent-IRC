@@ -3,11 +3,12 @@ use IO::Handle;
 use AnyEvent;
 use AnyEvent::IRC::Client;
 use AnyEvent::IRC::Util qw/mk_msg parse_irc_msg/;
+use Data::Dumper;
 
 my ($nick, $server, $port) = @ARGV;
 
 my $c = AnyEvent->condvar;
-
+my $stdout = AnyEvent::Handle->new (fh => \*STDOUT);
 my $con = new AnyEvent::IRC::Client;
 
 $con->reg_cb (
@@ -18,18 +19,22 @@ $con->reg_cb (
          warn "Couldn't connect: $err\n";
          $c->broadcast;
       } else {
-         print "Connected!\n";
+         $stdout->push_write ("Connected!\n");
       }
 
       $con->register ($nick, $nick, $nick);
    },
    debug_recv => sub {
       my ($con, $msg) = @_;
-      print "< " . mk_msg ($msg->{prefix}, $msg->{command}, @{$msg->{params}});
+      $stdout->push_write (
+         "< " . mk_msg ($msg->{prefix}, $msg->{command}, @{$msg->{params}})
+      );
    },
    debug_send => sub {
       my ($con, @msg) = @_;
-      print "> " . mk_msg (undef, @msg);
+      $stdout->push_write (
+         "> " . mk_msg (undef, @msg)
+      );
    },
    registered => sub {
       my ($con) = @_;
@@ -47,14 +52,25 @@ $con->reg_cb (
          on_read => sub {
             $stdin->push_read (line => sub {
                my ($stdin, $line) = @_;
-               my $msg = parse_irc_msg ($line);
-               $con->send_msg ($msg->{command}, @{$msg->{params}});
+
+               if ($line =~ /^!/) {
+                  my $r = eval $line;
+                  if ($@) {
+                     warn "eval error: $@\n";
+                  } else {
+                     $Data::Dumper::Terse = 1;
+                     $stdout->push_write ("result: " . Data::Dumper::Dumper ($r));
+                  }
+               } else {
+                  my $msg = parse_irc_msg ($line);
+                  $con->send_msg ($msg->{command}, @{$msg->{params}});
+               }
             });
          }
       );
    },
    disconnect => sub {
-      print "Disconnect: $_[1]!\n";
+      warn "disconnect: $_[1]!\n";
       $c->broadcast
    },
 );
