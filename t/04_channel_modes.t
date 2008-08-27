@@ -9,7 +9,7 @@ test_init (2, 1);
 
 state (joining_second => undef, undef, sub {
    $CL2->send_srv (JOIN => '#aic_test_2');
-}, 'voiced', 'connected');
+}, 'voiced', 'bot2_saw_motd');
 
 my $sent_voice = 1;
 $CL->reg_cb (
@@ -34,7 +34,6 @@ $CL->reg_cb (
 );
 
 $CL2->reg_cb (
-   irc_376 => sub { state_done ('connected'); },
    channel_nickmode_update => sub {
       my ($con, $chan, $nick) = @_;
 
