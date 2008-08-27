@@ -3,7 +3,7 @@ use strict;
 no warnings;
 require Exporter;
 our @ISA = qw/Exporter/;
-our @EXPORT = qw/test_init test_plan test_start $CL $CL2 $NICK $NICK2 state state_check/;
+our @EXPORT = qw/test_init test_plan test_start $CL $CL2 $NICK $NICK2 state state_check state_done/;
 
 use Test::More;
 use AnyEvent;
@@ -164,6 +164,16 @@ sub state {
    $STATE{$state} = { name => $state, args => $args, cond => $cond, cb => $cb, done => 0, prec => \@prec };
 }
 
+sub state_done {
+   my ($state) = @_;
+   $STATE{$state} ||= {
+      name => $state, args => undef, cond => undef, cb => undef, done => 0
+   };
+   $STATE{$state}->{done} = 1;
+
+   state_check ();
+}
+
 sub state_check {
    my ($state, $cb) = @_;
    if (defined $state && !$STATE{$state}->{done}) {
@@ -176,7 +186,7 @@ sub state_check {
             next;
          }
 
-         if ($s->{cond}->($s->{args})) {
+         if (!defined ($s->{cond}) || $s->{cond}->($s->{args})) {
             if ($ENV{ANYEVENT_IRC_MAINTAINER_TEST_DEBUG}) {
                print "STATE '$s->{name}' OK\n";
             }
