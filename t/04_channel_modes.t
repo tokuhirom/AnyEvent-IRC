@@ -28,8 +28,8 @@ $CL2->reg_cb (
    channel_nickmode_update => sub {
       my ($con, $chan, $nick) = @_;
 
-      if ($con->eq_str ('aicbot', $nick)) {
-         my $modes = $con->nick_modes ($chan, 'aicbot');
+      if ($con->eq_str ($NICK, $nick)) {
+         my $modes = $con->nick_modes ($chan, $NICK);
 
          if ($con->isupport ('NAMESX')) {
             is ((join '', sort keys %$modes), 'ov', 'mode of first bot (namesx)');

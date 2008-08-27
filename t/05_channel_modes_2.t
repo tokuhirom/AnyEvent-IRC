@@ -22,8 +22,8 @@ $CL->reg_cb (
          if ($c->{aicbot}->{o}) {
             pass ("first bot is op");
 
-            $con->send_srv (MODE => '#aic_test_2' => '+v' => 'aicbot');
-            $con->send_srv (MODE => '#aic_test_2' => '+o' => 'aicbot2');
+            $con->send_srv (MODE => '#aic_test_2' => '+v' => $NICK);
+            $con->send_srv (MODE => '#aic_test_2' => '+o' => $NICK2);
          } else {
             fail ("first bot is op");
             $CL->disconnect ("fail");
@@ -39,8 +39,8 @@ $CL2->reg_cb (
    channel_remove => sub {
       my ($con, $msg, $chan, @nicks) = @_;
 
-      if (grep { $con->eq_str ($_, 'aicbot') } @nicks) {
-         ok (!defined ($con->nick_modes ($chan, 'aicbot')), "nick modes of first bot reset after disconnect");
+      if (grep { $con->eq_str ($_, $NICK) } @nicks) {
+         ok (!defined ($con->nick_modes ($chan, $NICK)), "nick modes of first bot reset after disconnect");
          $CL->disconnect ("done");
          $CL2->disconnect ("done");
       }
@@ -48,8 +48,8 @@ $CL2->reg_cb (
    channel_nickmode_update => sub {
       my ($con, $chan, $nick) = @_;
 
-      if ($con->eq_str ('aicbot', $nick)) {
-         my $modes = $con->nick_modes ($chan, 'aicbot');
+      if ($con->eq_str ($NICK, $nick)) {
+         my $modes = $con->nick_modes ($chan, $NICK);
 
          if ($bot1_upd_cnt == 0) {
             is ((join '', sort keys %$modes), 'o', 'first mode of first bot');
@@ -60,15 +60,15 @@ $CL2->reg_cb (
 
          $bot1_upd_cnt++;
 
-      } elsif ($con->eq_str ('aicbot2', $nick)) {
-         my $modes = $con->nick_modes ($chan, 'aicbot2');
+      } elsif ($con->eq_str ($NICK2, $nick)) {
+         my $modes = $con->nick_modes ($chan, $NICK2);
 
          if ($bot2_upd_cnt == 0) {
             is ((join '', sort keys %$modes), '', 'first mode of second bot');
 
          } elsif ($bot2_upd_cnt == 1) {
             is ((join '', sort keys %$modes), 'o', 'second mode of second bot');
-            $con->send_srv (MODE => '#aic_test_2' => '+v' => 'aicbot2');
+            $con->send_srv (MODE => '#aic_test_2' => '+v' => $NICK2);
 
          } else {
             is ((join '', sort keys %$modes), 'ov', 'third mode of second bot');

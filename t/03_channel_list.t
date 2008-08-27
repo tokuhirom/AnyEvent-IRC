@@ -13,17 +13,17 @@ $CL->reg_cb (
 
       if ($targ eq '#aic_test_1') {
          is ($msg->{params}->[-1], "I'm 2", "message seen by first bot");
-         is (prefix_nick ($msg), 'aicbot2', 'message for first bot came from second bot');
+         is (prefix_nick ($msg), $NICK2, 'message for first bot came from second bot');
 
          my $chans = $con->channel_list;
          is ((join '', keys %$chans), '#aic_test_1', 'channel of first bot');
 
          ok (
-            scalar (grep { $_ eq 'aicbot' } keys %{$chans->{'#aic_test_1'}}),
+            scalar (grep { $_ eq $NICK } keys %{$chans->{'#aic_test_1'}}),
             'first bot sees himself'
          );
          ok (
-            scalar (grep { $_ eq 'aicbot2' } keys %{$chans->{'#aic_test_1'}}),
+            scalar (grep { $_ eq $NICK2 } keys %{$chans->{'#aic_test_1'}}),
             'first bot sees second bot'
          );
 
@@ -38,7 +38,7 @@ $CL2->reg_cb (
 
       if ($targ eq '#aic_test_1') {
          is ($msg->{params}->[-1], "I'm 1", "message seen by second bot");
-         is (prefix_nick ($msg), 'aicbot', 'message for first bot came from second bot');
+         is (prefix_nick ($msg), $NICK, 'message for first bot came from second bot');
 
          my $chans = $con->channel_list;
          is ((join '', keys %$chans), '#aic_test_1', 'channel of second bot');
@@ -51,11 +51,11 @@ $CL2->reg_cb (
          );
 
          ok (
-            scalar (grep { $_ eq 'aicbot' } keys %{$chans->{'#aic_test_1'}}),
+            scalar (grep { $_ eq $NICK } keys %{$chans->{'#aic_test_1'}}),
             'second bot sees first bot'
          );
          ok (
-            scalar (grep { $_ eq 'aicbot2' } keys %{$chans->{'#aic_test_1'}}),
+            scalar (grep { $_ eq $NICK2 } keys %{$chans->{'#aic_test_1'}}),
             'second bot sees himself'
          );
 

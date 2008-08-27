@@ -2,7 +2,7 @@ package AnyEvent::IRC::Client;
 use strict;
 no warnings;
 
-use AnyEvent::IRC::Util qw/prefix_nick decode_ctcp/;
+use AnyEvent::IRC::Util qw/prefix_nick decode_ctcp split_prefix is_nick_prefix join_prefix/;
 
 use base AnyEvent::IRC::Connection::;
 
@@ -235,14 +235,17 @@ sub new {
    $self->reg_cb (irc_mode    => \&mode_cb);
    $self->reg_cb (irc_353     => \&namereply_cb);
    $self->reg_cb (irc_366     => \&endofnames_cb);
+   $self->reg_cb (irc_352     => \&whoreply_cb);
+   $self->reg_cb (irc_311     => \&whoisuser_cb);
    $self->reg_cb (irc_ping    => \&ping_cb);
    $self->reg_cb (irc_pong    => \&pong_cb);
 
    $self->reg_cb (irc_privmsg => \&privmsg_cb);
    $self->reg_cb (irc_notice  => \&privmsg_cb);
 
-   $self->reg_cb ('irc_*'     => \&anymsg_cb);
    $self->reg_cb ('irc_*'     => \&debug_cb);
+   $self->reg_cb ('irc_*'     => \&anymsg_cb);
+   $self->reg_cb ('irc_*'     => \&update_ident_cb);
 
    $self->reg_cb (disconnect  => \&disconnect_cb);
 
@@ -555,6 +558,9 @@ This method returns 2 values: the mode map and the nickname.
 The mode map is a hash reference with the keys being the modes the nick has set
 and the values being 1.
 
+NOTE: If you feed in a prefixed ident ('@elmex!elmex@fofofof.de') you get 3 values
+out actually: the mode map, the nickname and the ident, otherwise the 3rd value is undef.
+
 =cut
 
 sub split_nick_mode {
@@ -562,15 +568,21 @@ sub split_nick_mode {
 
    my $pchrs = $self->{prefix_chars};
 
-   if ($prefixed_nick =~ /^([$pchrs]+)(.+)$/) {
+   if ($prefixed_nick =~ /^([\Q$pchrs\E]+)(.+)$/) {
       my ($p, $nick) = ($1, $2);
       my %mode_map;
       for (split //, $p) { $mode_map{$self->map_prefix_to_mode ($_)} = 1 }
 
-      return (\%mode_map, $nick);
+      my (@n) = split_prefix ($nick);
+
+      if (@n > 1 && defined $n[1]) {
+         return (\%mode_map, $n[0], $nick);
+      } else {
+         return (\%mode_map, $nick, undef);
+      }
    }
 
-   return ({}, $prefixed_nick);
+   return ({}, $prefixed_nick, undef);
 }
 
 =item B<map_prefix_to_mode ($prefix)>
@@ -624,7 +636,19 @@ sub is_channel_name {
    my ($self, $string) = @_;
 
    my $cchrs = $self->{channel_chars};
-   $string =~ /^([$cchrs]+)(.+)$/;
+   $string =~ /^([\Q$cchrs\E]+)(.+)$/;
+}
+
+=item B<nick_ident ($nick)>
+
+This method returns the whole ident of the C<$nick> if the informations is available.
+If the nick's ident hasn't been seen yet, undef is returned.
+
+=cut
+
+sub nick_ident {
+   my ($self, $nick) = @_;
+   $self->{idents}->{$self->lower_case ($nick)}
 }
 
 ################################################################################
@@ -634,6 +658,13 @@ sub is_channel_name {
 sub _was_me {
    my ($self, $msg) = @_;
    $self->lower_case (prefix_nick ($msg)) eq $self->lower_case ($self->nick ())
+}
+
+sub update_ident {
+   my ($self, $ident) = @_;
+   my ($n, $u, $h) = split_prefix ($ident);
+   $self->{idents}->{$self->lower_case ($n)} = $ident;
+   #d# warn "IDENTS:\n".(join "\n", map { "\t$_\t=>\t$self->{idents}->{$_}" } keys %{$self->{idents}})."\n";
 }
 
 ################################################################################
@@ -787,6 +818,10 @@ sub isupport_cb {
       $self->send_srv (PROTOCTL => 'NAMESX');
    }
 
+   if (defined $self->{isupport}->{UHNAMES}) {
+      $self->send_srv (PROTOCTL => 'UHNAMES');
+   }
+
    if (defined (my $chan_prefixes = $self->{isupport}->{CHANTYPES})) {
       $self->{channel_chars} = $chan_prefixes;
    }
@@ -838,12 +873,26 @@ sub endofnames_cb {
    my ($self, $msg) = @_;
    my $chan = $msg->{params}->[1];
    my @names_result = @{delete $self->{_tmp_namereply}};
-   my @nicks = map { ($self->split_nick_mode ($_))[1] } @names_result;
-   my @modes = map { ($self->split_nick_mode ($_))[0] } @names_result;
+   my @modes  = map { ($self->split_nick_mode ($_))[0] } @names_result;
+   my @nicks  = map { ($self->split_nick_mode ($_))[1] } @names_result;
+   my @idents = grep { defined } map { ($self->split_nick_mode ($_))[2] } @names_result;
    my @new_nicks = $self->_filter_new_nicks_from_channel ($chan, @nicks);
 
    $self->channel_add ($msg, $chan, \@nicks, \@modes);
+   $self->update_ident ($_) for @idents;
    $self->event (channel_add => $msg, $chan, @new_nicks) if @nicks;
+}
+
+sub whoreply_cb {
+   my ($self, $msg) = @_;
+   my (undef, $channel, $user, $host, $server, $nick) = @{$msg->{params}};
+   $self->update_ident (join_prefix ($nick, $user, $host));
+}
+
+sub whoisuser_cb {
+   my ($self, $msg) = @_;
+   my (undef, $nick, $user, $host) = @{$msg->{params}};
+   $self->update_ident (join_prefix ($nick, $user, $host));
 }
 
 sub join_cb {
@@ -854,6 +903,10 @@ sub join_cb {
    $self->channel_add ($msg, $chan, [$nick], [undef]);
    $self->event (channel_add => $msg, $chan, $nick);
    $self->event (join        => $nick, $chan, $self->_was_me ($msg));
+
+   if ($self->_was_me ($msg) && !$self->isupport ('UHNAMES')) {
+      $self->send_srv (WHO => $chan);
+   }
 }
 
 sub part_cb {
@@ -955,6 +1008,14 @@ sub topic_change_cb {
    my $topic = $msg->{params}->[-1];
 
    $self->event (channel_topic => $chan, $topic, $who);
+}
+
+sub update_ident_cb {
+   my ($self, $msg) = @_;
+
+   if (is_nick_prefix ($msg->{prefix})) {
+      $self->update_ident ($msg->{prefix});
+   }
 }
 
 =back

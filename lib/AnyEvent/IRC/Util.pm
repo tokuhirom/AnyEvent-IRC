@@ -6,7 +6,7 @@ our @ISA = qw/Exporter/;
 our @EXPORT_OK =
    qw(mk_msg parse_irc_msg split_prefix prefix_nick
       decode_ctcp encode_ctcp filter_ctcp_text_attr prefix_user prefix_host
-      rfc_code_to_name filter_colors);
+      rfc_code_to_name filter_colors is_nick_prefix join_prefix);
 
 =head1 NAME
 
@@ -268,6 +268,28 @@ sub split_prefix {
    # is no way for a client to distinguish.
    $prfx =~ m/^\s*([^!]*)(?:!([^@]*))?(?:@(.*?))?\s*$/;
    return ($1, $2, $3);
+}
+
+=item B<is_nick_prefix ($prefix)>
+
+Returns true if the prefix is a nick prefix, containing user and host.
+
+=cut
+
+sub is_nick_prefix {
+   my ($prfx) = @_;
+   $prfx =~ m/^\s*([^!]+)!([^@]+)@(.+)?\s*$/;
+}
+
+=item B<join_prefix ($nick, $user, $host)>
+
+Joins C<$nick>, C<$user> and C<$host> together to form a prefix.
+
+=cut
+
+sub join_prefix {
+   my ($n, $u, $h) = @_;
+   "$n!$u\@$h"
 }
 
 =item B<prefix_nick ($prefix)>

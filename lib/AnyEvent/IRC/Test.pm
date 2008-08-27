@@ -3,13 +3,15 @@ use strict;
 no warnings;
 require Exporter;
 our @ISA = qw/Exporter/;
-our @EXPORT = qw/test_init test_plan test_start $CL $CL2/;
+our @EXPORT = qw/test_init test_plan test_start $CL $CL2 $NICK $NICK2/;
 
 use Test::More;
 use AnyEvent;
 use AnyEvent::IRC::Client;
 use AnyEvent::IRC::Util qw/mk_msg/;
 
+our $NICK;
+our $NICK2;
 our $CL;
 our $CL2;
 our $CV;
@@ -60,6 +62,11 @@ sub test_init {
             pass ("connection ok");
          }
          $con->register (qw/aicbot aicbot aicbot/);
+         $NICK = 'aicbot';
+      },
+      registered => sub {
+         my ($con) = @_;
+         $NICK = $con->nick;
       },
       disconnect => sub {
          my ($con, $reason) = @_;
@@ -81,45 +88,70 @@ sub test_init {
       );
    }
 
-   $CL2 = AnyEvent::IRC::Client->new;
-   $CL2->reg_cb (
-      connect => sub {
-         my ($con, $err) = @_;
-         if (defined $err) {
-            fail ("second connection error: $err");
-            $CV->broadcast;
-            return;
-         } else {
-            pass ("second connection ok");
-         }
-         $con->register (qw/aicbot2 aicbot2 aicbot2/);
-      },
-      disconnect => sub {
-         my ($con, $reason) = @_;
-         is ($reason, 'done', 'disconnect ok');
-         $CV->broadcast if --$cv_cnt <= 0;
-      }
-   );
-
-   if ($DEBUG) {
+   if ($nd_cl) {
+      $CL2 = AnyEvent::IRC::Client->new;
       $CL2->reg_cb (
-         debug_send => sub {
-            my ($CL2, $prefix, $command, @params) = @_;
-            warn "2 SEND: ".mk_msg ($prefix, $command, @params);
+         connect => sub {
+            my ($con, $err) = @_;
+            if (defined $err) {
+               fail ("second connection error: $err");
+               $CV->broadcast;
+               return;
+            } else {
+               pass ("second connection ok");
+            }
+            $con->register (qw/aicbot2 aicbot2 aicbot2/);
+            $NICK2 = 'aicbot2';
          },
-         debug_recv => sub {
-            my ($CL2, $msg) = @_;
-            warn "2 RECV: ".mk_msg ($msg->{prefix}, $msg->{command}, @{$msg->{params}});
+         registered => sub {
+            my ($con) = @_;
+            $NICK2 = $con->nick;
+         },
+         disconnect => sub {
+            my ($con, $reason) = @_;
+            is ($reason, 'done', 'disconnect ok');
+            $CV->broadcast if --$cv_cnt <= 0;
          }
       );
+
+      if ($DEBUG) {
+         $CL2->reg_cb (
+            debug_send => sub {
+               my ($CL2, $prefix, $command, @params) = @_;
+               warn "2 SEND: ".mk_msg ($prefix, $command, @params);
+            },
+            debug_recv => sub {
+               my ($CL2, $msg) = @_;
+               warn "2 RECV: ".mk_msg ($msg->{prefix}, $msg->{command}, @{$msg->{params}});
+            }
+         );
+      }
    }
 }
 
+my $delay_timer;
 sub test_start {
-   $CL->connect ($SERVER, $PORT);
-   $CL2->connect ($SERVER, $PORT) if defined $CL2;
+   my $delay = $ENV{ANYEVENT_IRC_MAINTAINER_TEST_DELAY};
+
+   if ($delay) {
+      $delay_timer = AnyEvent->timer (after => $delay, cb => sub {
+         $CL->connect ($SERVER, $PORT);
+
+         $delay_timer = AnyEvent->timer (after => $delay, cb => sub {
+            $CL2->connect ($SERVER, $PORT)
+         }) if defined $CL2;
+      });
+   } else {
+      $CL->connect ($SERVER, $PORT);
+      $CL2->connect ($SERVER, $PORT) if defined $CL2;
+   }
+
    my $tout = 0;
-   $TMR = AnyEvent->timer (after => 10, cb => sub { $tout = 1; $CV->broadcast });
+   $TMR =
+      AnyEvent->timer (
+         after => 30 + $delay + ($CL2 ? $delay : 0),
+         cb => sub { $tout = 1; $CV->broadcast }
+      );
    $CV->wait;
    undef $TMR;
    ok (!$tout, "script didn't timeout");
