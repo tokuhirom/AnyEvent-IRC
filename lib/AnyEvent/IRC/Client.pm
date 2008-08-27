@@ -103,12 +103,18 @@ happens for example when they PART, QUIT or get KICKed.
 C<$msg> is the IRC message hash that as returned by C<parse_irc_msg>
 or undef if the reason for the removal was a disconnect on our end.
 
-=item B<channel_change $channel $old_nick $new_nick $is_myself>
+=item B<channel_change $msg $channel $old_nick $new_nick $is_myself>
 
 Emitted when a nickname on a channel changes. This is emitted when a NICK
 change occurs from C<$old_nick> to C<$new_nick> give the application a chance
 to quickly analyze what channels were affected.  C<$is_myself> is true when
 yourself was the one who changed the nick.
+
+=item B<channel_nickmode_update $channel $dest>
+
+This event is emitted when the (user) mode (eg. op status) of an occupant of
+a channel changes. C<$dest> is the nickname on the C<$channel> who's mode was
+updated.
 
 =item B<channel_topic $channel $topic $who>
 
@@ -226,6 +232,7 @@ sub new {
    $self->reg_cb (irc_part    => \&part_cb);
    $self->reg_cb (irc_kick    => \&kick_cb);
    $self->reg_cb (irc_quit    => \&quit_cb);
+   $self->reg_cb (irc_mode    => \&mode_cb);
    $self->reg_cb (irc_353     => \&namereply_cb);
    $self->reg_cb (irc_366     => \&endofnames_cb);
    $self->reg_cb (irc_ping    => \&ping_cb);
@@ -237,18 +244,19 @@ sub new {
    $self->reg_cb ('irc_*'     => \&anymsg_cb);
    $self->reg_cb ('irc_*'     => \&debug_cb);
 
-   $self->reg_cb (disconnect     => \&disconnect_cb);
+   $self->reg_cb (disconnect  => \&disconnect_cb);
 
-   $self->reg_cb (irc_437        => \&change_nick_login_cb);
-   $self->reg_cb (irc_433        => \&change_nick_login_cb);
+   $self->reg_cb (irc_437     => \&change_nick_login_cb);
+   $self->reg_cb (irc_433     => \&change_nick_login_cb);
 
-   $self->reg_cb (irc_332        => \&rpl_topic_cb);
-   $self->reg_cb (irc_topic      => \&topic_change_cb);
+   $self->reg_cb (irc_332     => \&rpl_topic_cb);
+   $self->reg_cb (irc_topic   => \&topic_change_cb);
 
-   $self->{isupport}     = { };
-   $self->{casemap_func} = $LOWER_CASEMAP{rfc1459};
-   $self->{prefix_chars} = '@+';
-   $self->{prefix2mode}  = { '@' => 'o', '+' => 'v' };
+   $self->{isupport}      = { };
+   $self->{casemap_func}  = $LOWER_CASEMAP{rfc1459};
+   $self->{prefix_chars}  = '@+';
+   $self->{prefix2mode}   = { '@' => 'o', '+' => 'v' };
+   $self->{channel_chars} = '#&';
    $self->{def_nick_change} = $self->{nick_change} =
       sub {
          my ($old_nick) = @_;
@@ -313,6 +321,17 @@ on login.
 
 sub nick { $_[0]->{nick} }
 
+=item B<is_my_nick ($string)>
+
+This returns true if C<$string> is the nick of ourself.
+
+=cut
+
+sub is_my_nick {
+   my ($self, $string) = @_;
+   $self->eq_str ($string, $self->nick);
+}
+
 =item B<registered ()>
 
 Returns a true value when the connection has been registered successful and
@@ -336,16 +355,15 @@ sub channel_list {
    return $self->{channel_list} || {};
 }
 
-=item B<nick_mode ($channel)>
+=item B<nick_modes ($channel, $nick)>
 
-This returns the mode string (eg. 'o' if the user has op rights)
-for the channel C<$channe>.
+This returns the mode map of the C<$nick> on C<$channel>.
 Returns undef if the channel isn't joined or the user is not on it.
-Returns an empty string if the user has no special mode set.
+Returns a hash reference with the modes the user has as keys and 1's as values.
 
 =cut
 
-sub nick_mode {
+sub nick_modes {
     my ($self, $channel, $nick) = @_;
 
     my $l = $self->channel_list;
@@ -490,6 +508,18 @@ sub lower_case {
    return $_;
 }
 
+=item B<eq_str ($str1, $str2)>
+
+This function compares two strings, whether they are describing the same
+IRC entity. They are lower cased by the networks case rules and compared then.
+
+=cut
+
+sub eq_str {
+   my ($self, $a, $b) = @_;
+   $self->lower_case ($a) eq $self->lower_case ($b)
+}
+
 =item B<isupport ([$key])>
 
 Provides access to the ISUPPORT variables sent by the IRC server. If $key is
@@ -510,10 +540,12 @@ sub isupport {
 =item B<split_nick_mode ($prefixed_nick)>
 
 This method splits the C<$prefix_nick> (eg. '+elmex') up into the
-mode of the user and the nickname. The returned mode will be the corresponding
-mode character instead of the prefix.
+mode of the user and the nickname.
 
-This method returns 2 values: the mode and the nickname.
+This method returns 2 values: the mode map and the nickname.
+
+The mode map is a hash reference with the keys being the modes the nick has set
+and the values being 1.
 
 =cut
 
@@ -522,12 +554,15 @@ sub split_nick_mode {
 
    my $pchrs = $self->{prefix_chars};
 
-   if ($prefixed_nick =~ /^([$pchrs])(.+)$/) {
+   if ($prefixed_nick =~ /^([$pchrs]+)(.+)$/) {
       my ($p, $nick) = ($1, $2);
-      return ($self->map_prefix_to_mode ($p), $nick);
+      my %mode_map;
+      for (split //, $p) { $mode_map{$self->map_prefix_to_mode ($_)} = 1 }
+
+      return (\%mode_map, $nick);
    }
 
-   return ('', $prefixed_nick);
+   return ({}, $prefixed_nick);
 }
 
 =item B<map_prefix_to_mode ($prefix)>
@@ -569,6 +604,21 @@ sub available_nick_modes {
    map { $self->map_prefix_to_mode ($_) } split //, $self->{prefix_chars}
 }
 
+=item B<is_channel_name ($string)>
+
+This return true if C<$string> is a channel name. It analyzes the prefix
+of the string (eg. if it is '#') and returns true if it finds a channel prefix.
+Those prefixes might be server specific, so ISUPPORT is checked for that too.
+
+=cut
+
+sub is_channel_name {
+   my ($self, $string) = @_;
+
+   my $cchrs = $self->{channel_chars};
+   $string =~ /^([$cchrs]+)(.+)$/;
+}
+
 ################################################################################
 # Private utility functions
 ################################################################################
@@ -579,7 +629,7 @@ sub _was_me {
 }
 
 ################################################################################
-# Callbacks
+# Channel utility functions
 ################################################################################
 
 sub channel_remove {
@@ -615,16 +665,32 @@ sub channel_add {
 
       if (defined $mode) {
          $ch->{$nick} = $mode;
+         $self->event (channel_usermode_update => $chan, $nick);
       } else {
-         $ch->{$nick} = '' unless defined $ch->{$nick};
+         $ch->{$nick} = { } unless defined $ch->{$nick};
       }
    }
+}
+
+sub channel_mode_change {
+   my ($self, $chan, $op, $mode, $nick) = @_;
+
+   my $nickmode = $self->nick_modes ($chan, $nick);
+   defined $nickmode or return;
+
+   $op eq '+'
+      ? $nickmode->{$mode} = 1
+      : delete $nickmode->{$mode};
 }
 
 sub _filter_new_nicks_from_channel {
    my ($self, $chan, @nicks) = @_;
    grep { not exists $self->{channel_list}->{$self->lower_case ($chan)}->{$_} } @nicks;
 }
+
+################################################################################
+# Callbacks
+################################################################################
 
 sub anymsg_cb {
    my ($self, $msg) = @_;
@@ -658,7 +724,7 @@ sub privmsg_cb {
 
    if ($msg->{params}->[-1] ne '') {
       my $targ = $msg->{params}->[0];
-      if ($targ =~ m/^(?:[#+&]|![A-Z0-9]{5})/) {
+      if ($self->is_channel_name ($targ)) {
          $self->event (publicmsg => $targ, $msg);
 
       } else {
@@ -708,8 +774,15 @@ sub isupport_cb {
          }
       }
    }
-}
 
+   if (defined $self->{isupport}->{NAMESX}) {
+      $self->send_srv (PROTOCTL => 'NAMESX');
+   }
+
+   if (defined (my $chan_prefixes = $self->{isupport}->{CHANTYPES})) {
+      $self->{channel_chars} = $chan_prefixes;
+   }
+}
 
 sub ping_cb {
    my ($self, $msg) = @_;
@@ -805,6 +878,23 @@ sub quit_cb {
       if ($self->{channel_list}->{$_}->{$nick}) {
          $self->channel_remove ($msg, $_, [$nick]);
          $self->event (channel_remove => $msg, $_, $nick);
+      }
+   }
+}
+
+sub mode_cb {
+   my ($self, $msg) = @_;
+   my $changer = prefix_nick ($msg);
+   my ($target, $mode, $dest) = (@{$msg->{params}});
+
+   if ($self->is_channel_name ($target)) {
+      if ($mode =~ /^([+-])(\S+)$/ && defined $dest) {
+         my ($op, $mode) = ($1, $2);
+
+         if (defined $self->map_mode_to_prefix ($mode)) {
+            $self->channel_mode_change ($target, $op, $mode, $dest);
+            $self->event (channel_nickmode_update => $target, $dest);
+         }
       }
    }
 }
