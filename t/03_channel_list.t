@@ -45,7 +45,7 @@ $CL2->reg_cb (
 
          ok (
             scalar (grep {
-               $con->nick_mode ('#aic_test_1', $_) eq 'o'
+               $con->nick_modes ('#aic_test_1', $_)->{o}
             } keys %{$chans->{'#aic_test_1'}}),
             'second bot sees that at least one has the mode "o"'
          );
