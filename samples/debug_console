@@ -1,0 +1,64 @@
+#!/usr/bin/env perl
+use IO::Handle;
+use AnyEvent;
+use AnyEvent::IRC::Client;
+use AnyEvent::IRC::Util qw/mk_msg parse_irc_msg/;
+
+my ($nick, $server, $port) = @ARGV;
+
+my $c = AnyEvent->condvar;
+
+my $con = new AnyEvent::IRC::Client;
+
+$con->reg_cb (
+   connect => sub {
+      my ($con, $err) = @_;
+
+      if (defined $err) {
+         warn "Couldn't connect: $err\n";
+         $c->broadcast;
+      } else {
+         print "Connected!\n";
+      }
+
+      $con->register ($nick, $nick, $nick);
+   },
+   debug_recv => sub {
+      my ($con, $msg) = @_;
+      print "< " . mk_msg ($msg->{prefix}, $msg->{command}, @{$msg->{params}});
+   },
+   debug_send => sub {
+      my ($con, @msg) = @_;
+      print "> " . mk_msg (undef, @msg);
+   },
+   registered => sub {
+      my ($con) = @_;
+
+      my $stdin;
+      $stdin = AnyEvent::Handle->new (
+         fh => \*STDIN,
+         on_eof => sub {
+            warn "EOF on STDIN, disconnecting...\n";
+            $con->disconnect ("Console EOF");
+         },
+         on_error => sub {
+            warn "Error on STDIN: $!\n";
+         },
+         on_read => sub {
+            $stdin->push_read (line => sub {
+               my ($stdin, $line) = @_;
+               my $msg = parse_irc_msg ($line);
+               $con->send_msg ($msg->{command}, @{$msg->{params}});
+            });
+         }
+      );
+   },
+   disconnect => sub {
+      print "Disconnect: $_[1]!\n";
+      $c->broadcast
+   },
+);
+
+$con->connect ($server, $port || 6667);
+
+$c->wait;
