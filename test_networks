@@ -9,12 +9,16 @@ test_network () {
    echo "#############################################################"
    export ANYEVENT_IRC_MAINTAINER_TEST_SERVER=$1
    if [ ! "$2" = "" ]; then
-      export ANYEVENT_IRC_MAINTAINER_TEST_DELAY=5
+      export ANYEVENT_IRC_MAINTAINER_TEST_DELAY=$2
    else
       export ANYEVENT_IRC_MAINTAINER_TEST_DELAY=0
    fi
 
    export ANYEVENT_IRC_MAINTAINER_TEST_DEBUG=$DEBUG
+
+   echo
+   export | grep ANYEVENT_IRC
+   echo
 
    make test
 }
@@ -24,10 +28,10 @@ if [ ! "$SERVER" = "" ]; then
    exit
 fi
 
+test_network "irc.quakenet.org" 20
+#test_network "irc.plan9.de" 10
 test_network "localhost"
 test_network "irc.freenode.net"
 test_network "irc.oftc.net" 5
 #test_network "irc.fu-berlin.de"
 test_network "irc.chatspike.net"
-test_network "irc.quakenet.org"
-test_network "irc.plan9.de"
