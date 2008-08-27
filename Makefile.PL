@@ -12,7 +12,7 @@ WriteMakefile(
     PREREQ_PM => {
         'Test::More' => 0,
         'AnyEvent'   => 0,
-        'Object::Event' => 0,
+        'Object::Event' => '0.5',
     },
     dist                => {
        COMPRESS => 'gzip -9f',
