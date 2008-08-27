@@ -10,6 +10,7 @@ lib/AnyEvent/IRC/Connection.pm
 samples/test_connect
 samples/notify
 samples/anyeventirccl
+samples/debug_console
 samples/anyeventirc
 t/00_load.t
 t/01_util.t

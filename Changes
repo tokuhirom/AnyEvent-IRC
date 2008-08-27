@@ -22,6 +22,7 @@ Revision history for AnyEvent::IRC
         - Renamed AnyEvent::IRC::Client::Connection to AnyEvent::IRC::Client
         - Implemented prefix<=>mode mapping for nicks
         - Added test utility module and first automated connect test
+        - Added debug_console example
 
 0.5     Sun Mar 11 23:54:10 CET 2007
         - added server password support
