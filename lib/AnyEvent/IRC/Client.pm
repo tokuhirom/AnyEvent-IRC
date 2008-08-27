@@ -673,7 +673,7 @@ sub channel_add {
 
       if (defined $mode) {
          $ch->{$nick} = $mode;
-         $self->event (channel_usermode_update => $chan, $nick);
+         $self->event (channel_nickmode_update => $chan, $nick);
       } else {
          $ch->{$nick} = { } unless defined $ch->{$nick};
       }

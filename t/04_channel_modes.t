@@ -8,7 +8,7 @@ use JSON;
 test_init (1, 1);
 
 $CL->reg_cb (
-   channel_usermode_update => sub {
+   channel_nickmode_update => sub {
       my ($con, $chan, $nick) = @_;
 
       if ($con->is_my_nick ($nick)) {
@@ -25,7 +25,7 @@ $CL->reg_cb (
 );
 
 $CL2->reg_cb (
-   channel_usermode_update => sub {
+   channel_nickmode_update => sub {
       my ($con, $chan, $nick) = @_;
 
       if ($con->eq_str ('aicbot', $nick)) {
