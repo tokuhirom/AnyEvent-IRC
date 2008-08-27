@@ -341,18 +341,27 @@ you can send commands.
 
 sub registered { $_[0]->{registered} }
 
-=item B<channel_list ()>
+=item B<channel_list ([$channel])>
 
+Without C<$channel> parameter:
 This returns a hash reference. The keys are the currently joined channels in lower case.
-The values are hash references which contain the joined nicks as key.
+The values are hash references which contain the joined nicks as key and the nick modes
+as values (as returned from C<nick_modes ()>).
 
-NOTE: Future versions might preserve the case from the JOIN command to the channels.
+If the C<$channel> parameter is given it returns the hash reference of the channel
+occupants or undef if the channel does not exist.
+
 
 =cut
 
 sub channel_list {
-   my ($self) = @_;
-   return $self->{channel_list} || {};
+   my ($self, $chan) = @_;
+
+   if (defined $chan) {
+      return $self->{channel_list}->{$self->lower_case ($chan)}
+   } else {
+      return $self->{channel_list} || {};
+   }
 }
 
 =item B<nick_modes ($channel, $nick)>
@@ -366,8 +375,7 @@ Returns a hash reference with the modes the user has as keys and 1's as values.
 sub nick_modes {
     my ($self, $channel, $nick) = @_;
 
-    my $l = $self->channel_list;
-    my $c = $l->{$self->lower_case ($channel)}
+    my $c = $self->channel_list ($channel)
        or return undef;
     return $c->{$self->lower_case ($nick)};
 }

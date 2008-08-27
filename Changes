@@ -24,6 +24,7 @@ Revision history for AnyEvent::IRC
         - Added test utility module and first automated connect test
         - Added debug_console example
         - Added mode tracking for users on channels, with NAMESX support
+        - channel_list() now also optionally accepts the channel as first argument
 
 0.5     Sun Mar 11 23:54:10 CET 2007
         - added server password support
