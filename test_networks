@@ -29,3 +29,5 @@ test_network "irc.freenode.net"
 test_network "irc.oftc.net" 5
 #test_network "irc.fu-berlin.de"
 test_network "irc.chatspike.net"
+test_network "irc.quakenet.org"
+test_network "irc.plan9.de"

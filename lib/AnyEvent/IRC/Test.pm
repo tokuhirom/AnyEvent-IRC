@@ -164,6 +164,8 @@ sub test_start {
 sub state {
    my ($state, $args, $cond, $cb, @prec) = @_;
    $STATE{$state} = { name => $state, args => $args, cond => $cond, cb => $cb, done => 0, prec => \@prec };
+
+   state_check ();
 }
 
 sub state_done {
@@ -178,13 +180,14 @@ sub state_done {
 
 sub state_check {
    my ($state, $cb) = @_;
-   if (defined $state && !$STATE{$state}->{done}) {
+   if (defined $state && $STATE{$state} && !$STATE{$state}->{done}) {
       $cb->($STATE{$state}->{args});
    }
 
    RESTART: {
       for my $s (grep { !$_->{done} } values %STATE) {
-         if (@{$s->{prec}} && grep { !$STATE{$_}->{done} } @{$s->{prec}}) {
+         if (@{$s->{prec} || []}
+             && grep { !$STATE{$_} || !$STATE{$_}->{done} } @{$s->{prec} || []}) {
             next;
          }
 
@@ -192,7 +195,7 @@ sub state_check {
             if ($ENV{ANYEVENT_IRC_MAINTAINER_TEST_DEBUG}) {
                print "STATE '$s->{name}' OK\n";
             }
-            $s->{cb}->($s->{args});
+            $s->{cb}->($s->{args}) if defined $s->{cb};
             $s->{done} = 1;
             goto RESTART;
          }
