@@ -7,31 +7,37 @@ use JSON;
 
 test_init (7, 1);
 
-my $bot2_join_sent = 0;
-$CL->reg_cb (
-   channel_add => sub {
-      my ($con) = @_;
-
-      my $c = $con->channel_list ('#aic_test_2');
-
-      if ($c->{aicbot} && !$bot2_join_sent) {
-         $CL2->send_srv (JOIN => '#aic_test_2');
-         $bot2_join_sent = 1;
-
-      } elsif ($c->{aicbot} && $c->{aicbot2}) {
-         if ($c->{aicbot}->{o}) {
-            pass ("first bot is op");
-
-            $con->send_srv (MODE => '#aic_test_2' => '+v' => $NICK);
-            $con->send_srv (MODE => '#aic_test_2' => '+o' => $NICK2);
-         } else {
-            fail ("first bot is op");
-            $CL->disconnect ("fail");
-            $CL2->disconnect ("fail");
-         }
+state (
+   first_bot_joined => {},
+   sub { ($CL->channel_list ('#aic_test_2') || {})->{$NICK} },
+   sub {
+      my $c = $CL->channel_list ('#aic_test_2');
+      if ($c->{$NICK}->{o}) {
+         pass ("first bot is op");
+      } else {
+         fail ("first bot is op");
+         $CL->disconnect ("fail");
+         $CL2->disconnect ("fail");
       }
-   },
+
+
+      $_[0]->{timer} = AnyEvent->timer (after => 2, cb => sub {
+         $CL2->send_srv (JOIN => '#aic_test_2');
+      });
+   }
 );
+
+state (
+   second_bot_joined => {},
+   sub { ($CL->channel_list ('#aic_test_2') || {})->{$NICK2} },
+   sub {
+      $CL->send_srv (MODE => '#aic_test_2' => '+v' => $NICK);
+      $CL->send_srv (MODE => '#aic_test_2' => '+o' => $NICK2);
+   },
+   'first_bot_joined'
+);
+
+$CL->reg_cb (channel_add => sub { state_check; });
 
 my $bot1_upd_cnt = 0;
 my $bot2_upd_cnt = 0;

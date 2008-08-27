@@ -5,20 +5,24 @@ use AnyEvent::IRC::Test;
 use AnyEvent::IRC::Util qw/prefix_nick/;
 use JSON;
 
-test_init (1, 1);
+test_init (2, 1);
 
+my $sent_voice = 1;
 $CL->reg_cb (
    channel_nickmode_update => sub {
       my ($con, $chan, $nick) = @_;
 
       if ($con->is_my_nick ($nick)) {
          if ($con->nick_modes ($chan, $con->nick)->{o}) {
-            $con->send_srv (MODE => $chan => '+v' => $con->nick);
-            $CL2->send_srv (JOIN => '#aic_test_2');
-            
+            $con->send_srv (MODE => $chan => '+v' => $con->nick) if $sent_voice--;
          } else {
             fail ("we got op on channel entry");
             $con->disconnect ("fail");
+         }
+
+         if ($con->nick_modes ($chan, $con->nick)->{v}) {
+            pass ("we were able to give us voice");
+            $CL2->send_srv (JOIN => '#aic_test_2');
          }
       }
    }

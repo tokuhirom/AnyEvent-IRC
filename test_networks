@@ -1,0 +1,31 @@
+#!/bin/bash
+
+DEBUG=$1
+SERVER=$2
+
+test_network () {
+   echo "#############################################################"
+   echo "# $1"
+   echo "#############################################################"
+   export ANYEVENT_IRC_MAINTAINER_TEST_SERVER=$1
+   if [ ! "$2" = "" ]; then
+      export ANYEVENT_IRC_MAINTAINER_TEST_DELAY=5
+   else
+      export ANYEVENT_IRC_MAINTAINER_TEST_DELAY=0
+   fi
+
+   export ANYEVENT_IRC_MAINTAINER_TEST_DEBUG=$DEBUG
+
+   make test
+}
+
+if [ ! "$SERVER" = "" ]; then
+   test_network $SERVER
+   exit
+fi
+
+test_network "localhost"
+test_network "irc.freenode.net"
+test_network "irc.oftc.net" 5
+#test_network "irc.fu-berlin.de"
+test_network "irc.chatspike.net"

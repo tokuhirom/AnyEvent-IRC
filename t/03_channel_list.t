@@ -7,26 +7,30 @@ use JSON;
 
 test_init (11, 1);
 
-my $sent_messages = 0;
-sub check_next_stage {
-   return if $sent_messages;
-   if ($CL->channel_list ('#aic_test_1') && $CL2->channel_list ('#aic_test_1')) {
+state (both_bots_joined => { },
+   sub {
+      ($CL->channel_list ('#aic_test_1') || {})->{$NICK}
+      && ($CL->channel_list ('#aic_test_1') || {})->{$NICK2}
+      && ($CL2->channel_list ('#aic_test_1') || {})->{$NICK}
+      && ($CL2->channel_list ('#aic_test_1') || {})->{$NICK2}
+   },
+   sub {
       $CL->send_srv  (PRIVMSG => '#aic_test_1', "I'm 1");
       $CL2->send_srv (PRIVMSG => '#aic_test_1', "I'm 2");
-      $sent_messages = 1;
    }
-}
+);
 
-my $messages_seen = 0;
-sub check_quit {
-   if (++$messages_seen == 2) {
+state (both_bots_seen_each_other => { see_cnt => 2 },
+   sub { $_[0]->{see_cnt} == 0 },
+   sub {
       $CL->disconnect ('done');
       $CL2->disconnect ('done');
-   }
-}
+   },
+   'both_bots_joined'
+);
 
 $CL->reg_cb (
-   channel_add => sub { check_next_stage () },
+   channel_add => sub { state_check () },
    publicmsg => sub {
       my ($con, $targ, $msg) = @_;
 
@@ -46,13 +50,13 @@ $CL->reg_cb (
             'first bot sees second bot'
          );
 
-         check_quit ();
+         state_check (both_bots_seen_each_other => sub { $_[0]->{see_cnt}-- });
       }
    }
 );
 
 $CL2->reg_cb (
-   channel_add => sub { check_next_stage () },
+   channel_add => sub { state_check () },
    publicmsg => sub {
       my ($con, $targ, $msg) = @_;
 
@@ -79,7 +83,7 @@ $CL2->reg_cb (
             'second bot sees himself'
          );
 
-         check_quit ();
+         state_check (both_bots_seen_each_other => sub { $_[0]->{see_cnt}-- });
       }
    }
 );

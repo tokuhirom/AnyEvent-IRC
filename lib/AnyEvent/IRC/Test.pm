@@ -3,7 +3,7 @@ use strict;
 no warnings;
 require Exporter;
 our @ISA = qw/Exporter/;
-our @EXPORT = qw/test_init test_plan test_start $CL $CL2 $NICK $NICK2/;
+our @EXPORT = qw/test_init test_plan test_start $CL $CL2 $NICK $NICK2 state state_check/;
 
 use Test::More;
 use AnyEvent;
@@ -16,6 +16,7 @@ our $CL;
 our $CL2;
 our $CV;
 our $TMR;
+our %STATE;
 our ($SERVER, $PORT) = (localhost => 6667);
 
 =head1 NAME
@@ -34,6 +35,9 @@ AnyEvent::IRC::Test - A test helper module
 
 sub test_init {
    my ($cnt, $nd_cl) = @_;
+
+   $NICK = 'aicbot';
+   $NICK2 = 'aicbot2';
 
    if ($ENV{ANYEVENT_IRC_MAINTAINER_TEST_SERVER}) {
       if ($ENV{ANYEVENT_IRC_MAINTAINER_TEST_SERVER} =~ /^([^:]+)(?::(\d+))?$/) {
@@ -61,8 +65,7 @@ sub test_init {
          } else {
             pass ("connection ok");
          }
-         $con->register (qw/aicbot aicbot aicbot/);
-         $NICK = 'aicbot';
+         $con->register ($NICK, $NICK, $NICK);
       },
       registered => sub {
          my ($con) = @_;
@@ -100,8 +103,7 @@ sub test_init {
             } else {
                pass ("second connection ok");
             }
-            $con->register (qw/aicbot2 aicbot2 aicbot2/);
-            $NICK2 = 'aicbot2';
+            $con->register ($NICK2, $NICK2, $NICK2);
          },
          registered => sub {
             my ($con) = @_;
@@ -155,6 +157,45 @@ sub test_start {
    $CV->wait;
    undef $TMR;
    ok (!$tout, "script didn't timeout");
+}
+
+sub state {
+   my ($state, $args, $cond, $cb, @prec) = @_;
+   $STATE{$state} = { name => $state, args => $args, cond => $cond, cb => $cb, done => 0, prec => \@prec };
+}
+
+sub state_check {
+   my ($state, $cb) = @_;
+   if (defined $state && !$STATE{$state}->{done}) {
+      $cb->($STATE{$state}->{args});
+   }
+
+   RESTART: {
+      for my $s (grep { !$_->{done} } values %STATE) {
+         if (@{$s->{prec}} && grep { !$STATE{$_}->{done} } @{$s->{prec}}) {
+            next;
+         }
+
+         if ($s->{cond}->($s->{args})) {
+            if ($ENV{ANYEVENT_IRC_MAINTAINER_TEST_DEBUG}) {
+               print "STATE '$s->{name}' OK\n";
+            }
+            $s->{cb}->($s->{args});
+            $s->{done} = 1;
+            goto RESTART;
+         }
+      }
+   }
+
+   if ($ENV{ANYEVENT_IRC_MAINTAINER_TEST_DEBUG}) {
+      warn "STATE STATUS:\n";
+      for my $s (keys %STATE) {
+         warn "\t$s => $STATE{$s}->{done}\t"
+            . join (',', map {
+                  "$_:$STATE{$s}->{args}->{$_}" } keys %{$STATE{$s}->{args}}
+            )."\n";
+      }
+   }
 }
 
 =head1 AUTHOR
