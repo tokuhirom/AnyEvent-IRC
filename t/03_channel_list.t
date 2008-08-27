@@ -7,7 +7,26 @@ use JSON;
 
 test_init (11, 1);
 
+my $sent_messages = 0;
+sub check_next_stage {
+   return if $sent_messages;
+   if ($CL->channel_list ('#aic_test_1') && $CL2->channel_list ('#aic_test_1')) {
+      $CL->send_srv  (PRIVMSG => '#aic_test_1', "I'm 1");
+      $CL2->send_srv (PRIVMSG => '#aic_test_1', "I'm 2");
+      $sent_messages = 1;
+   }
+}
+
+my $messages_seen = 0;
+sub check_quit {
+   if (++$messages_seen == 2) {
+      $CL->disconnect ('done');
+      $CL2->disconnect ('done');
+   }
+}
+
 $CL->reg_cb (
+   channel_add => sub { check_next_stage () },
    publicmsg => sub {
       my ($con, $targ, $msg) = @_;
 
@@ -27,12 +46,13 @@ $CL->reg_cb (
             'first bot sees second bot'
          );
 
-         $con->disconnect ('done');
+         check_quit ();
       }
    }
 );
 
 $CL2->reg_cb (
+   channel_add => sub { check_next_stage () },
    publicmsg => sub {
       my ($con, $targ, $msg) = @_;
 
@@ -59,14 +79,12 @@ $CL2->reg_cb (
             'second bot sees himself'
          );
 
-         $con->disconnect ('done');
+         check_quit ();
       }
    }
 );
 
 $CL->send_srv (JOIN => '#aic_test_1');
 $CL2->send_srv (JOIN => '#aic_test_1');
-$CL->send_chan ('#aic_test_1', PRIVMSG => '#aic_test_1', "I'm 1");
-$CL2->send_chan ('#aic_test_1', PRIVMSG => '#aic_test_1', "I'm 2");
 
 test_start;
