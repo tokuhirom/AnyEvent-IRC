@@ -123,6 +123,11 @@ is the channel for which C<$topic> is the current topic now.
 Which is set by C<$who>. C<$who> might be undefined when it's not known
 who set the channel topic.
 
+=item B<ident_change $nick $ident>
+
+Whenever the user and host of C<$nick> has been determined or a change
+happened this event is emitted.
+
 =item B<join $nick $channel $is_myself>
 
 Emitted when C<$nick> enters the channel C<$channel> by JOINing.
@@ -663,7 +668,11 @@ sub _was_me {
 sub update_ident {
    my ($self, $ident) = @_;
    my ($n, $u, $h) = split_prefix ($ident);
+   my $old = $self->{idents}->{$self->lower_case ($n)};
    $self->{idents}->{$self->lower_case ($n)} = $ident;
+   if ($old ne $ident) {
+      $self->event (ident_change => $n, $ident);
+   }
    #d# warn "IDENTS:\n".(join "\n", map { "\t$_\t=>\t$self->{idents}->{$_}" } keys %{$self->{idents}})."\n";
 }
 
