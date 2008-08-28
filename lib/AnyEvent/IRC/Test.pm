@@ -77,6 +77,7 @@ sub test_init {
          $CV->broadcast if --$cv_cnt <= 0;
       },
       irc_376 => sub { state_done ('bot1_saw_motd'); },
+      irc_422 => sub { state_done ('bot1_saw_motd'); },
    );
 
    if ($DEBUG) {
@@ -116,6 +117,7 @@ sub test_init {
             $CV->broadcast if --$cv_cnt <= 0;
          },
          irc_376 => sub { state_done ('bot2_saw_motd'); },
+         irc_422 => sub { state_done ('bot2_saw_motd'); },
       );
 
       if ($DEBUG) {
