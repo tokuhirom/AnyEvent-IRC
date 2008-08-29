@@ -8,7 +8,7 @@ test_init (1);
 $CL->reg_cb (
    test_end_of_motd => sub { # wait for end of MOTD
       my ($con) = @_;
-      $con->send_srv (JOIN => '#aic_test_1');
+      $con->send_srv (JOIN => '#aic_test_4');
    },
    ident_change => sub {
       my ($con, $nick, $ident) = @_;

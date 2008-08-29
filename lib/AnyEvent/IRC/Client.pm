@@ -573,21 +573,25 @@ sub split_nick_mode {
 
    my $pchrs = $self->{prefix_chars};
 
+   my %mode_map;
+
+   my $nick;
+
    if ($prefixed_nick =~ /^([\Q$pchrs\E]+)(.+)$/) {
-      my ($p, $nick) = ($1, $2);
-      my %mode_map;
+      my $p = $1;
+      $nick = $2;
       for (split //, $p) { $mode_map{$self->map_prefix_to_mode ($_)} = 1 }
-
-      my (@n) = split_prefix ($nick);
-
-      if (@n > 1 && defined $n[1]) {
-         return (\%mode_map, $n[0], $nick);
-      } else {
-         return (\%mode_map, $nick, undef);
-      }
+   } else {
+      $nick = $prefixed_nick;
    }
 
-   return ({}, $prefixed_nick, undef);
+   my (@n) = split_prefix ($nick);
+
+   if (@n > 1 && defined $n[1]) {
+      return (\%mode_map, $n[0], $nick);
+   } else {
+      return (\%mode_map, $nick, undef);
+   }
 }
 
 =item B<map_prefix_to_mode ($prefix)>

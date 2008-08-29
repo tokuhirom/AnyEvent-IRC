@@ -9,9 +9,9 @@ test_init (7, 1);
 
 state (
    first_bot_joined => {},
-   sub { ($CL->channel_list ('#aic_test_2') || {})->{$NICK} },
+   sub { ($CL->channel_list ('#aic_test_3') || {})->{$NICK} },
    sub {
-      my $c = $CL->channel_list ('#aic_test_2');
+      my $c = $CL->channel_list ('#aic_test_3');
       if ($c->{$NICK}->{o}) {
          pass ("first bot is op");
       } else {
@@ -20,19 +20,17 @@ state (
          $CL2->disconnect ("fail");
       }
 
-
-      $_[0]->{timer} = AnyEvent->timer (after => 2, cb => sub {
-         $CL2->send_srv (JOIN => '#aic_test_2');
-      });
-   }
+      $CL2->send_srv (JOIN => '#aic_test_3');
+   },
+   'bot1_saw_motd', 'bot2_saw_motd'
 );
 
 state (
    second_bot_joined => {},
-   sub { ($CL->channel_list ('#aic_test_2') || {})->{$NICK2} },
+   sub { ($CL->channel_list ('#aic_test_3') || {})->{$NICK2} },
    sub {
-      $CL->send_srv (MODE => '#aic_test_2' => '+v' => $NICK);
-      $CL->send_srv (MODE => '#aic_test_2' => '+o' => $NICK2);
+      $CL->send_srv (MODE => '#aic_test_3' => '+v' => $NICK);
+      $CL->send_srv (MODE => '#aic_test_3' => '+o' => $NICK2);
    },
    'first_bot_joined'
 );
@@ -74,11 +72,11 @@ $CL2->reg_cb (
 
          } elsif ($bot2_upd_cnt == 1) {
             is ((join '', sort keys %$modes), 'o', 'second mode of second bot');
-            $con->send_srv (MODE => '#aic_test_2' => '+v' => $NICK2);
+            $con->send_srv (MODE => '#aic_test_3' => '+v' => $NICK2);
 
          } else {
             is ((join '', sort keys %$modes), 'ov', 'third mode of second bot');
-            $CL->send_srv (PART => '#aic_test_2');
+            $CL->send_srv (PART => '#aic_test_3');
          }
 
          $bot2_upd_cnt++;
@@ -86,6 +84,6 @@ $CL2->reg_cb (
    }
 );
 
-$CL->send_srv (JOIN => '#aic_test_2');
+$CL->send_srv (JOIN => '#aic_test_3');
 
 test_start;
