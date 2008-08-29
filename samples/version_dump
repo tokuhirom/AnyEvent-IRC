@@ -29,7 +29,8 @@ $con->reg_cb (
    irc_351 => sub {
       # < :irctest.test 351 elmex hybrid-7.2.3(SVN). irctest.test :eGgIKM6 TS6ow
       my ($con, $msg) = @_;
-      print "version: ". join (", ", @{$msg->{params}})."\n";
+      my @v = @{$msg->{params}};
+      print "$v[1]\n";
       $con->disconnect ("done");
    },
    disconnect => sub {
