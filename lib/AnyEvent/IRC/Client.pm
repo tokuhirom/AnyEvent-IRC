@@ -827,12 +827,16 @@ sub isupport_cb {
       }
    }
 
-   if (defined $self->{isupport}->{NAMESX}) {
+   if ($self->{isupport}->{NAMESX}
+       && !$self->{protoctl}->{NAMESX}) {
       $self->send_srv (PROTOCTL => 'NAMESX');
+      $self->{protoctl}->{NAMESX} = 1;
    }
 
-   if (defined $self->{isupport}->{UHNAMES}) {
+   if ($self->{isupport}->{UHNAMES}
+       && !$self->{protoctl}->{UHNAMES}) {
       $self->send_srv (PROTOCTL => 'UHNAMES');
+      $self->{protoctl}->{UHNAMES} = 1;
    }
 
    if (defined (my $chan_prefixes = $self->{isupport}->{CHANTYPES})) {
