@@ -147,10 +147,7 @@ further processing done.
 sub send_raw {
    my ($self, $ircline) = @_;
 
-   unless ($self->{socket}) {
-      die "Couldn't write to socket: Not connected!";
-   }
-
+   return unless $self->{socket};
    $self->{socket}->push_write ($ircline . "\015\012");
 }
 
