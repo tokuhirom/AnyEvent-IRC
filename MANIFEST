@@ -18,3 +18,4 @@ t/02_prefix_mode_map.t
 t/03_channel_list.t
 t/04_channel_modes.t
 t/05_channel_modes_2.t
+t/06_ident_change.t

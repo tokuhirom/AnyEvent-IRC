@@ -76,8 +76,8 @@ sub test_init {
          is ($reason, 'done', 'disconnect ok');
          $CV->broadcast if --$cv_cnt <= 0;
       },
-      irc_376 => sub { state_done ('bot1_saw_motd'); },
-      irc_422 => sub { state_done ('bot1_saw_motd'); },
+      irc_376 => sub { state_done ('bot1_saw_motd'); $_[0]->event ('test_end_of_motd'); },
+      irc_422 => sub { state_done ('bot1_saw_motd'); $_[0]->event ('test_end_of_motd'); },
    );
 
    if ($DEBUG) {
@@ -116,8 +116,8 @@ sub test_init {
             is ($reason, 'done', 'disconnect ok');
             $CV->broadcast if --$cv_cnt <= 0;
          },
-         irc_376 => sub { state_done ('bot2_saw_motd'); },
-         irc_422 => sub { state_done ('bot2_saw_motd'); },
+         irc_376 => sub { state_done ('bot2_saw_motd'); $_[0]->event ('test_end_of_motd');},
+         irc_422 => sub { state_done ('bot2_saw_motd'); $_[0]->event ('test_end_of_motd');},
       );
 
       if ($DEBUG) {
