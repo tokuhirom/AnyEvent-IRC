@@ -1,0 +1,58 @@
+#!/bin/bash
+
+if [ "$1" = "versions" ]; then
+   for i in `seq 6667 6681`; do echo -n $i; echo -n ": "; perl samples/version_dump 192.168.5.10 $i; done
+   exit
+fi
+
+export PERL_ANYEVENT_MODEL=Perl
+
+DEBUG=$1
+SERVER=$2
+DELAY=$3
+
+test_network () {
+   echo "#############################################################"
+   echo "# $1:$2"
+   echo -n "# server version: "
+   perl samples/version_dump $1 $2
+   echo "#############################################################"
+   export ANYEVENT_IRC_MAINTAINER_TEST_SERVER="$1:$2"
+   if [ ! "$3" = "" ]; then
+      export ANYEVENT_IRC_MAINTAINER_TEST_DELAY=$3
+   else
+      export ANYEVENT_IRC_MAINTAINER_TEST_DELAY=0
+   fi
+
+   export ANYEVENT_IRC_MAINTAINER_TEST_DEBUG=$DEBUG
+
+   echo
+   export | grep ANYEVENT_IRC
+   echo
+
+   make test
+
+   echo
+   echo
+}
+
+if [ ! "$SERVER" = "" ]; then
+   test_network $SERVER $DELAY
+   exit
+fi
+
+#test_network 192.168.5.10 6667 0
+#test_network 192.168.5.10 6668 0
+#test_network 192.168.5.10 6669 0
+#test_network 192.168.5.10 6670 3
+#test_network 192.168.5.10 6671 3
+#test_network 192.168.5.10 6672 0
+#test_network 192.168.5.10 6673 0
+#test_network 192.168.5.10 6674 3
+#test_network 192.168.5.10 6675 0
+#test_network 192.168.5.10 6676 0
+#test_network 192.168.5.10 6677 2
+#test_network 192.168.5.10 6678 2
+#test_network 192.168.5.10 6679 0
+#test_network 192.168.5.10 6680 0
+test_network 192.168.5.10 6681 0

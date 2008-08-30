@@ -2,7 +2,7 @@
 use IO::Handle;
 use AnyEvent;
 use AnyEvent::IRC::Client;
-use AnyEvent::IRC::Util qw/mk_msg parse_irc_msg/;
+use AnyEvent::IRC::Util qw/mk_msg parse_irc_msg encode_ctcp/;
 use Data::Dumper;
 
 my ($nick, $server, $port) = @ARGV;
@@ -23,6 +23,12 @@ $con->reg_cb (
       }
 
       $con->register ($nick, $nick, $nick);
+   },
+   ctcp_version => sub {
+      my ($con, $src, $targ, $msg, $type) = @_;
+      return if $type ne 'PRIVMSG';
+      $con->send_msg (NOTICE => $src,
+         encode_ctcp (['VERSION', "DumpVersion:1.0:Perl"]));
    },
    debug_recv => sub {
       my ($con, $msg) = @_;

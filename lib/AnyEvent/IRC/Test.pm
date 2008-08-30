@@ -8,7 +8,7 @@ our @EXPORT = qw/test_init test_plan test_start $CL $CL2 $NICK $NICK2 state stat
 use Test::More;
 use AnyEvent;
 use AnyEvent::IRC::Client;
-use AnyEvent::IRC::Util qw/mk_msg/;
+use AnyEvent::IRC::Util qw/mk_msg encode_ctcp/;
 
 our $NICK;
 our $NICK2;
@@ -71,6 +71,12 @@ sub test_init {
          my ($con) = @_;
          $NICK = $con->nick;
       },
+      ctcp_version => sub {
+         my ($c, $src, $targ, $msg, $type) = @_;
+         return if $type ne 'PRIVMSG';
+         $c->send_msg (NOTICE => $src,
+                       encode_ctcp (['VERSION', "AnyEventTest:1.0:Perl"]));
+      },
       disconnect => sub {
          my ($con, $reason) = @_;
          is ($reason, 'done', 'disconnect ok');
@@ -110,6 +116,12 @@ sub test_init {
          registered => sub {
             my ($con) = @_;
             $NICK2 = $con->nick;
+         },
+         ctcp_version => sub {
+            my ($c, $src, $targ, $msg, $type) = @_;
+            return if $type ne 'PRIVMSG';
+            $c->send_msg (NOTICE => $src,
+                          encode_ctcp (['VERSION', "AnyEventTest:1.0:Perl"]));
          },
          disconnect => sub {
             my ($con, $reason) = @_;
