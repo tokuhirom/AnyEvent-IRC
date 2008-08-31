@@ -71,18 +71,13 @@ sub test_init {
          $NICK = $con->nick;
          state_done ('bot1_registered');
       },
-      ctcp_version => sub {
-         my ($c, $src, $targ, $msg, $type) = @_;
-         return if $type ne 'PRIVMSG';
-         $c->send_msg (NOTICE => $src,
-                       encode_ctcp (['VERSION', "AnyEventTest:1.0:Perl"]));
-      },
       disconnect => sub {
          my ($con, $reason) = @_;
          is ($reason, 'done', 'disconnect ok');
          $CV->broadcast if --$cv_cnt <= 0;
       },
    );
+   $CL->ctcp_auto_reply ('VERSION', ['VERSION', 'AnyEventTest:1.0:Perl']);
 
    if ($DEBUG) {
       $CL->reg_cb (
@@ -115,18 +110,13 @@ sub test_init {
             $NICK2 = $con->nick;
             state_done ('bot2_registered');
          },
-         ctcp_version => sub {
-            my ($c, $src, $targ, $msg, $type) = @_;
-            return if $type ne 'PRIVMSG';
-            $c->send_msg (NOTICE => $src,
-                          encode_ctcp (['VERSION', "AnyEventTest:1.0:Perl"]));
-         },
          disconnect => sub {
             my ($con, $reason) = @_;
             is ($reason, 'done', 'disconnect ok');
             $CV->broadcast if --$cv_cnt <= 0;
          },
       );
+      $CL2->ctcp_auto_reply ('VERSION', ['VERSION', 'AnyEventTest:1.0:Perl']);
 
       if ($DEBUG) {
          $CL2->reg_cb (

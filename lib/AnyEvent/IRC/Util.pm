@@ -201,7 +201,7 @@ element will be interpreted as CTCP TAG (eg. one of PING, VERSION, .. whatever)
 the rest of the array ref will be appended to the tag and seperated by
 spaces.
 
-All parts of the message will be contatenated and lowlevel quoted.
+All parts of the message will be concatenated and lowlevel quoted.
 That means you can embed _any_ character from 0 to 255 in this message (thats
 what the lowlevel quoting allows).
 

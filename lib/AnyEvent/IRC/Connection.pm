@@ -161,7 +161,7 @@ for C<AnyEvent::IRC::Util::mk_msg (undef, $command, @params)>.
 sub send_msg {
    my ($self, @msg) = @_;
 
-   $self->event (sent => @msg);
+   $self->event (sent => undef, @msg);
    $self->send_raw (mk_msg (undef, @msg));
 }
 

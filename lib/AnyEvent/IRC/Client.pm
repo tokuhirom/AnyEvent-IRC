@@ -2,7 +2,9 @@ package AnyEvent::IRC::Client;
 use strict;
 no warnings;
 
-use AnyEvent::IRC::Util qw/prefix_nick decode_ctcp split_prefix is_nick_prefix join_prefix/;
+use AnyEvent::IRC::Util
+      qw/prefix_nick decode_ctcp split_prefix
+         is_nick_prefix join_prefix encode_ctcp/;
 
 use base AnyEvent::IRC::Connection::;
 
@@ -52,12 +54,13 @@ that manages all the stuff that noone wants to implement again and again
 when handling with IRC. For example it PONGs the server or keeps track
 of the users on a channel.
 
-Please note that CTCP handling is still up to you. It will be decoded
-for you and events will be generated. But generating replies is up to you.
-
 This module also implements the ISUPPORT (command 005) extension of the IRC protocol
 (see http://www.irc.org/tech_docs/005.html) and will enable the NAMESX and UHNAMES
 extensions when supported by the server.
+
+Also CTCP support is implemented, all CTCP messages will be decoded and events
+for them will be generated. You can configure auto-replies to certain CTCP commands
+with the C<ctcp_auto_reply> method, or you can generate the replies yourself.
 
 =head2 A NOTE TO CASE MANAGEMENT
 
@@ -263,6 +266,8 @@ sub new {
 
    $self->reg_cb (irc_332     => \&rpl_topic_cb);
    $self->reg_cb (irc_topic   => \&topic_change_cb);
+
+   $self->reg_cb (ctcp        => \&ctcp_auto_reply_cb);
 
    $self->{isupport}      = { };
    $self->{casemap_func}  = $LOWER_CASEMAP{rfc1459};
@@ -723,6 +728,39 @@ sub nick_ident {
    $self->{idents}->{$self->lower_case ($nick)}
 }
 
+=item B<ctcp_auto_reply ($ctcp_command, @msg)>
+=item B<ctcp_auto_reply ($ctcp_command, $coderef)>
+
+This method installs an auto-reply for the reception of the C<$ctcp_command>
+via PRIVMSG, C<@msg> will be used as argument to the C<encode_ctcp> function of
+the L<AnyEvent::IRC::Util> package. The replies will be sent with the NOTICE
+IRC command.
+
+If C<$coderef> was given and is a code reference, it will called each time a
+C<$ctcp_command> is received, this is useful for eg.  CTCP PING reply
+generation. The arguments will be the same arguments that the C<ctcp> event
+callbacks get. (See also C<ctcp> event description above).  The return value of
+the called subroutine should be a list of arguments for C<encode_ctcp>.
+
+Currently you can only configure one auto-reply per C<$ctcp_command>.
+
+Example:
+
+   $cl->ctcp_auto_reply ('VERSION', ['VERSION', 'ScriptBla:0.1:Perl']);
+
+   $cl->ctcp_auto_reply ('PING', sub {
+      my ($cl, $src, $target, $tag, $msg, $type) = @_;
+      ['PING', $msg]
+   });
+
+=cut
+
+sub ctcp_auto_reply {
+   my ($self, $ctcp_command, @msg) = @_;
+
+   $self->{ctcp_auto_replies}->{$ctcp_command} = \@msg;
+}
+
 ################################################################################
 # Private utility functions
 ################################################################################
@@ -1103,6 +1141,21 @@ sub update_ident_cb {
    if (is_nick_prefix ($msg->{prefix})) {
       $self->update_ident ($msg->{prefix});
    }
+}
+
+sub ctcp_auto_reply_cb {
+   my ($self, $src, $targ, $tag, $msg, $type) = @_;
+
+   return if $type ne 'PRIVMSG';
+
+   my $ctcprepl = $self->{ctcp_auto_replies}->{$tag}
+      or return;
+
+   if (ref ($ctcprepl->[0]) eq 'CODE') {
+      $ctcprepl = [$ctcprepl->[0]->($self, $src, $targ, $tag, $msg, $type)]
+   }
+
+   $self->send_msg (NOTICE => $src, encode_ctcp (@$ctcprepl));
 }
 
 =back
