@@ -22,12 +22,6 @@ $con->reg_cb (
 
       $con->register ($nick, $nick, $nick);
    },
-   ctcp_version => sub {
-      my ($con, $src, $targ, $msg, $type) = @_;
-      return if $type ne 'PRIVMSG';
-      $con->send_msg (NOTICE => $src,
-         encode_ctcp (['VERSION', "DumpVersion:1.0:Perl"]));
-   },
    registered => sub {
       my ($con, $msg) = @_;
       $con->send_srv ('VERSION');
@@ -43,6 +37,8 @@ $con->reg_cb (
       $c->broadcast
    },
 );
+
+$con->ctcp_auto_reply ('VERSION', ['VERSION', 'VersionDump:0.1:Perl']);
 
 $con->connect ($server, $port || 6667);
 
