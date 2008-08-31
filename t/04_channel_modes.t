@@ -9,7 +9,7 @@ test_init (2, 1);
 
 state (joining_second => undef, undef, sub {
    $CL2->send_srv (JOIN => '#aic_test_2');
-}, 'voiced', 'bot2_saw_motd');
+}, 'voiced', 'bot2_registered');
 
 my $sent_voice = 1;
 $CL->reg_cb (

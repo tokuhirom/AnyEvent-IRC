@@ -26,8 +26,6 @@ AnyEvent::IRC::Client - A highlevel IRC connection
          warn "connect error: $err\n";
          return;
       }
-
-      $con->register (qw/testbot testbot testbot/);
    });
    $con->reg_cb (registered => sub { print "I'm in!\n" });
    $con->reg_cb (disconnect => sub { print "I'm out!\n" });
@@ -55,8 +53,11 @@ when handling with IRC. For example it PONGs the server or keeps track
 of the users on a channel.
 
 Please note that CTCP handling is still up to you. It will be decoded
-for you and events will be generated. But generating replies
-is up to you.
+for you and events will be generated. But generating replies is up to you.
+
+This module also implements the ISUPPORT (command 005) extension of the IRC protocol
+(see http://www.irc.org/tech_docs/005.html) and will enable the NAMESX and UHNAMES
+extensions when supported by the server.
 
 =head2 A NOTE TO CASE MANAGEMENT
 
@@ -84,7 +85,9 @@ Use C<reg_cb> as described in L<Object::Event> to register to such an event.
 
 =item B<registered>
 
-Emitted when the connection got successfully registered.
+Emitted when the connection got successfully registered and the end of the MOTD
+(IRC command 376 or 422 (No MOTD file found)) was seen, so you can start sending
+commands and all ISUPPORT/PROTOCTL handshaking has been done.
 
 =item B<channel_add $msg, $channel @nicks>
 
@@ -230,7 +233,8 @@ sub new {
    my $class = ref($this) || $this;
    my $self = $class->SUPER::new (@_);
 
-   $self->reg_cb (irc_001     => \&welcome_cb);
+   $self->reg_cb (irc_376     => \&welcome_cb);
+   $self->reg_cb (irc_422     => \&welcome_cb);
    $self->reg_cb (irc_005     => \&isupport_cb);
    $self->reg_cb (irc_join    => \&join_cb);
    $self->reg_cb (irc_nick    => \&nick_cb);
@@ -274,10 +278,54 @@ sub new {
    return $self;
 }
 
+=item B<connect ($host, $port [, $info])>
+
+This method does the same as the C<connect> method of L<AnyEvent::Connection>,
+but if the C<$info> parameter is passed it will automatically register with the
+IRC server upon connect for you, and you won't have to call the C<register>
+method yourself.
+
+The keys of the hash reference you can pass in C<$info> are:
+
+   nick      - the nickname you want to register as
+   user      - your username
+   real      - your realname
+   password  - the server password
+
+All keys, except C<nick> are optional.
+
+=cut
+
+sub connect {
+   my ($self, $host, $port, $info) = @_;
+
+   if (defined $info) {
+      $self->reg_cb (
+         ext_before_connect => sub {
+            my ($self, $err) = @_;
+
+            unless ($err) {
+               $self->register (
+                  $info->{nick}, $info->{user}, $info->{real}, $info->{password}
+               );
+            }
+
+            $self->unreg_me;
+         }
+      );
+   }
+
+   $self->SUPER::connect ($host, $port);
+}
+
 =item B<register ($nick, $user, $real, $server_pass)>
 
 Sends the IRC registration commands NICK and USER.
 If C<$server_pass> is passed also a PASS command is generated.
+
+NOTE: If you passed the nick, user, etc. already to the C<connect> method
+you won't need to call this method, as L<AnyEvent::IRC::Client> will do that
+for you.
 
 =cut
 
@@ -403,10 +451,25 @@ sub send_msg {
 =item B<send_srv ($command, @params)>
 
 This function sends an IRC message that is constructed by C<mk_msg (undef,
-$command, @params)> (see L<AnyEvent::IRC::Util>).  If the connection isn't yet
-registered (for example if the connection is slow) and hasn't got a welcome
-(IRC command 001) from the server yet, the IRC message is queued until it gets
-a welcome.
+$command, @params)> (see L<AnyEvent::IRC::Util>). If the C<registered> event
+has NOT yet been emitted the messages are queued until that event is emitted,
+and then sent to the server.
+
+This allows you to simply write this:
+
+   my $cl = AnyEvent::IRC::Client->new;
+   $cl->connect ('irc.freenode.net', 6667, { nick => 'testbot' });
+   $cl->send_srv (PRIVMSG => 'elmex', 'Hi there!');
+
+Instead of:
+
+   my $cl = AnyEvent::IRC::Client->new;
+   $cl->reg_cb (
+      registered => sub {
+         $cl->send_msg (PRIVMSG => 'elmex', 'Hi there!');
+      }
+   );
+   $cl->connect ('irc.freenode.net', 6667, { nick => 'testbot' });
 
 =cut
 
@@ -787,6 +850,13 @@ sub privmsg_cb {
 
 sub welcome_cb {
    my ($self, $msg) = @_;
+
+   if ($self->{registered}) {
+      warn "welcome_cb has been called twice!\n";
+      return;
+   }
+
+   $self->unreg_me;
 
    $self->{registered} = 1;
 

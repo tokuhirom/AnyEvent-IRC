@@ -22,7 +22,7 @@ state (
 
       $CL2->send_srv (JOIN => '#aic_test_3');
    },
-   'bot1_saw_motd', 'bot2_saw_motd'
+   'bot1_registered', 'bot2_registered'
 );
 
 state (

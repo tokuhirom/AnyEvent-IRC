@@ -25,6 +25,10 @@ Revision history for AnyEvent::IRC
         - Added debug_console example
         - Added mode tracking for users on channels, with NAMESX support
         - channel_list() now also optionally accepts the channel as first argument
+        - the connect method of AnyEvent::Client now accepts an additional parameter
+          where you can pass the register information for automatic registration.
+        - the 'registered' event is now only emitted when the irc
+          commands 376 or 422 have been seen.
 
 0.5     Sun Mar 11 23:54:10 CET 2007
         - added server password support

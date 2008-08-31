@@ -65,11 +65,11 @@ sub test_init {
          } else {
             pass ("connection ok");
          }
-         $con->register ($NICK, $NICK, $NICK);
       },
       registered => sub {
          my ($con) = @_;
          $NICK = $con->nick;
+         state_done ('bot1_registered');
       },
       ctcp_version => sub {
          my ($c, $src, $targ, $msg, $type) = @_;
@@ -82,8 +82,6 @@ sub test_init {
          is ($reason, 'done', 'disconnect ok');
          $CV->broadcast if --$cv_cnt <= 0;
       },
-      irc_376 => sub { state_done ('bot1_saw_motd'); $_[0]->event ('test_end_of_motd'); },
-      irc_422 => sub { state_done ('bot1_saw_motd'); $_[0]->event ('test_end_of_motd'); },
    );
 
    if ($DEBUG) {
@@ -111,11 +109,11 @@ sub test_init {
             } else {
                pass ("second connection ok");
             }
-            $con->register ($NICK2, $NICK2, $NICK2);
          },
          registered => sub {
             my ($con) = @_;
             $NICK2 = $con->nick;
+            state_done ('bot2_registered');
          },
          ctcp_version => sub {
             my ($c, $src, $targ, $msg, $type) = @_;
@@ -128,8 +126,6 @@ sub test_init {
             is ($reason, 'done', 'disconnect ok');
             $CV->broadcast if --$cv_cnt <= 0;
          },
-         irc_376 => sub { state_done ('bot2_saw_motd'); $_[0]->event ('test_end_of_motd');},
-         irc_422 => sub { state_done ('bot2_saw_motd'); $_[0]->event ('test_end_of_motd');},
       );
 
       if ($DEBUG) {
@@ -160,8 +156,8 @@ sub test_start {
          }) if defined $CL2;
       });
    } else {
-      $CL->connect ($SERVER, $PORT);
-      $CL2->connect ($SERVER, $PORT) if defined $CL2;
+      $CL->connect ($SERVER, $PORT, { nick => $NICK });
+      $CL2->connect ($SERVER, $PORT, { nick => $NICK2 }) if defined $CL2;
    }
 
    my $tout = 0;
