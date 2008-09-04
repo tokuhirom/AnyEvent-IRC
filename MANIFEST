@@ -19,3 +19,5 @@ t/03_channel_list.t
 t/04_channel_modes.t
 t/05_channel_modes_2.t
 t/06_ident_change.t
+t/07_ctcp_auto_reply.t
+t/08_channel_list_once.t
