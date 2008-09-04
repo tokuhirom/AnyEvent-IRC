@@ -269,6 +269,7 @@ sub new {
 
    $self->reg_cb (ctcp        => \&ctcp_auto_reply_cb);
 
+   $self->{channel_list}  = { };
    $self->{isupport}      = { };
    $self->{casemap_func}  = $LOWER_CASEMAP{rfc1459};
    $self->{prefix_chars}  = '@+';
@@ -807,14 +808,15 @@ sub channel_add {
    for my $nick (@$nicks) {
       my $mode = shift @mods;
 
-      if ($self->lower_case ($nick) eq $self->lower_case ($self->nick ())) {
+      if ($self->is_my_nick ($nick)) {
          for (@{$self->{chan_queue}->{$self->lower_case ($chan)}}) {
             $self->send_msg (@$_);
          }
+
          $self->clear_chan_queue ($chan);
       }
 
-      my $ch = $self->{channel_list}->{$self->lower_case ($chan)};
+      my $ch = $self->{channel_list}->{$self->lower_case ($chan)} ||= { };
 
       if (defined $mode) {
          $ch->{$nick} = $mode;
@@ -1005,7 +1007,7 @@ sub endofnames_cb {
 
    $self->channel_add ($msg, $chan, \@nicks, \@modes);
    $self->update_ident ($_) for @idents;
-   $self->event (channel_add => $msg, $chan, @new_nicks) if @nicks;
+   $self->event (channel_add => $msg, $chan, @new_nicks) if @new_nicks;
 }
 
 sub whoreply_cb {
@@ -1025,8 +1027,10 @@ sub join_cb {
    my $chan = $msg->{params}->[0];
    my $nick = prefix_nick ($msg);
 
+   my @new_nicks = $self->_filter_new_nicks_from_channel ($chan, $nick);
+
    $self->channel_add ($msg, $chan, [$nick], [undef]);
-   $self->event (channel_add => $msg, $chan, $nick);
+   $self->event (channel_add => $msg, $chan, @new_nicks) if @new_nicks;
    $self->event (join        => $nick, $chan, $self->_was_me ($msg));
 
    if ($self->_was_me ($msg) && !$self->isupport ('UHNAMES')) {
