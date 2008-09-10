@@ -97,7 +97,7 @@ plan tests =>
       my $pmsg = parse_irc_msg ($msg);
       my @params = @{$pmsg->{params}};
       my $omsg =
-         mk_msg ($pmsg->{prefix}, $pmsg->{command}, @params);
+         mk_msg ($pmsg->{prefix}, $pmsg->{command}, @params) . "\015\012";
 
       is ($omsg, $msg, "$name: message parse and making succeed");
    }

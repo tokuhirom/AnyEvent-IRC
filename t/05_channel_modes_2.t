@@ -5,21 +5,12 @@ use AnyEvent::IRC::Test;
 use AnyEvent::IRC::Util qw/prefix_nick/;
 use JSON;
 
-test_init (7, 1);
+test_init (6, 1);
 
 state (
    first_bot_joined => {},
    sub { ($CL->channel_list ('#aic_test_3') || {})->{$NICK} },
    sub {
-      my $c = $CL->channel_list ('#aic_test_3');
-      if ($c->{$NICK}->{o}) {
-         pass ("first bot is op");
-      } else {
-         fail ("first bot is op");
-         $CL->disconnect ("fail");
-         $CL2->disconnect ("fail");
-      }
-
       $CL2->send_srv (JOIN => '#aic_test_3');
    },
    'bot1_registered', 'bot2_registered'

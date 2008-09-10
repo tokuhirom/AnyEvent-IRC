@@ -99,16 +99,18 @@ Please note that only the last parameter may contain spaces, and if it
 contains spaces it will be quoted as the trailing part of the
 IRC message.
 
+NOTE: The trailing "\015\012" is NOT added by this function!
+
 EXAMPLES:
 
    mk_msg (undef, "PRIVMSG", "magnus", "you suck!");
-   # will return: "PRIVMSG magnus :you suck!\015\012"
+   # will return: "PRIVMSG magnus :you suck!"
 
    mk_msg (undef, "PRIVMSG", "magnus", "Hi!");
-   # will return: "PRIVMSG magnus :Hi!\015\012"
+   # will return: "PRIVMSG magnus :Hi!"
 
    mk_msg (undef, "JOIN", "#test");
-   # will return: "JOIN #test\015\012"
+   # will return: "JOIN #test"
 
 =cut
 
@@ -129,7 +131,6 @@ sub mk_msg {
   map { $msg .= " $_" } @params;
 
   $msg .= defined $trail ? " :$trail" : "";
-  $msg .= "\015\012";
 
   return $msg;
 }

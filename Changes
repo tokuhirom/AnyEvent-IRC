@@ -30,6 +30,7 @@ Revision history for AnyEvent::IRC
         - the 'registered' event is now only emitted when the irc
           commands 376 or 422 have been seen.
         - added ctcp_auto_reply() method to AnyEvent::IRC::Client interface.
+        - Util::mk_msg does NOT append "\015\012" anymore.
 
 0.5     Sun Mar 11 23:54:10 CET 2007
         - added server password support
