@@ -521,7 +521,7 @@ sub clear_srv_queue {
 }
 
 
-=item B<send_chan ($channel, $command, @params))>
+=item B<send_chan ($channel, $command, @params)>
 
 This function sends a message (constructed by C<mk_msg (undef, $command,
 @params)> to the server, like C<send_srv> only that it will queue
