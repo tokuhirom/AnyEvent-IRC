@@ -7,10 +7,15 @@ use JSON;
 
 test_init (4, 1);
 
+state (start => undef, undef, sub {
+   $CL2->send_srv (PRIVMSG => $NICK, encode_ctcp (['VERSION']));
+   $CL2->send_srv (PRIVMSG => $NICK, encode_ctcp (['PING', 1235]));
+}, 'bot1_registered', 'bot2_registered');
+
 state (done => undef, undef, sub {
    $CL->disconnect ("done");
    $CL2->disconnect ("done");
-}, 'ctcp_version_reply', 'ctcp_ping_reply');
+}, 'start', 'ctcp_version_reply', 'ctcp_ping_reply');
 
 $CL->ctcp_auto_reply ('VERSION', ['VERSION', 'ScriptBla:0.1:Perl']);
 $CL->ctcp_auto_reply ('PING', sub {
@@ -36,8 +41,5 @@ $CL2->reg_cb (
       }
    },
 );
-
-$CL2->send_srv (PRIVMSG => $NICK, encode_ctcp (['VERSION']));
-$CL2->send_srv (PRIVMSG => $NICK, encode_ctcp (['PING', 1235]));
 
 test_start;
