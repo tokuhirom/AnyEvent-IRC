@@ -53,8 +53,8 @@ test_network 192.168.5.10 6675 0
 test_network 192.168.5.10 6676 0
 test_network 192.168.5.10 6677 2
 test_network 192.168.5.10 6678 2
-test_network 192.168.5.10 6679 0
-test_network 192.168.5.10 6680 0
+test_network 192.168.5.10 6679 3
+test_network 192.168.5.10 6680 3
 test_network 192.168.5.10 6681 0
 test_network 192.168.5.10 6682 0
 test_network 192.168.5.10 6683 3

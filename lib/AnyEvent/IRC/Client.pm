@@ -271,6 +271,8 @@ sub new {
 
    $self->reg_cb (ctcp        => \&ctcp_auto_reply_cb);
 
+   $self->reg_cb (registered  => \&registered_cb);
+
    $self->{channel_list}  = { };
    $self->{isupport}      = { };
    $self->{casemap_func}  = $LOWER_CASEMAP{rfc1459};
@@ -462,6 +464,10 @@ This function sends an IRC message that is constructed by C<mk_msg (undef,
 $command, @params)> (see L<AnyEvent::IRC::Util>). If the C<registered> event
 has NOT yet been emitted the messages are queued until that event is emitted,
 and then sent to the server.
+
+B<NOTE:> If you stop the registered event (with C<stop_event>, see L<Object::Event>)
+in a callback registered to the C<before_registered> event, the C<send_srv> queue
+will B<NOT> be flushed and B<NOT> sent to the server!
 
 This allows you to simply write this:
 
@@ -893,15 +899,17 @@ sub welcome_cb {
    }
 
    $self->unreg_me;
-
    $self->{registered} = 1;
+   $self->event ('registered');
+}
+
+sub registered_cb {
+   my ($self, $msg) = @_;
 
    for (@{$self->{con_queue}}) {
       $self->send_msg (@$_);
    }
    $self->clear_srv_queue ();
-
-   $self->event ('registered');
 }
 
 sub isupport_cb {
