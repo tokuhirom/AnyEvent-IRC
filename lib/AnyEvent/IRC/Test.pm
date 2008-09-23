@@ -139,10 +139,10 @@ sub test_start {
 
    if ($delay) {
       $delay_timer = AnyEvent->timer (after => $delay, cb => sub {
-         $CL->connect ($SERVER, $PORT);
+         $CL->connect ($SERVER, $PORT, { nick => $NICK });
 
          $delay_timer = AnyEvent->timer (after => $delay, cb => sub {
-            $CL2->connect ($SERVER, $PORT)
+            $CL2->connect ($SERVER, $PORT, { nick => $NICK2 })
          }) if defined $CL2;
       });
    } else {
