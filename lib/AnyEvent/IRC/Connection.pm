@@ -92,7 +92,8 @@ sub connect {
             },
             on_drain => sub {
                $self->event ('buffer_empty');
-            }
+            },
+            autocork => 1,
          );
 
       $self->event ('connect');

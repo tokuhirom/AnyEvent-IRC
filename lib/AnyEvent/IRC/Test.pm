@@ -66,6 +66,10 @@ sub test_init {
             pass ("connection ok");
          }
       },
+      error => sub {
+         my ($con, $code, $message, $ircmsg) = @_;
+         diag ("1 ERROR: $code: $message");
+      },
       registered => sub {
          my ($con) = @_;
          $NICK = $con->nick;
@@ -104,6 +108,10 @@ sub test_init {
             } else {
                pass ("second connection ok");
             }
+         },
+         error => sub {
+            my ($con, $code, $message, $ircmsg) = @_;
+            diag ("2 ERROR: $code: $message");
          },
          registered => sub {
             my ($con) = @_;

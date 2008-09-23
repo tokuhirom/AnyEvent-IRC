@@ -96,7 +96,7 @@ commands and all ISUPPORT/PROTOCTL handshaking has been done.
 
 Emitted when C<@nicks> are added to the channel C<$channel>,
 this happens for example when someone JOINs a channel or when you
-get a RPL_NAMREPLY (see RFC2812).
+get a RPL_NAMREPLY (see RFC1459).
 
 
 C<$msg> is the IRC message hash that as returned by C<parse_irc_msg>.
@@ -197,13 +197,15 @@ The last parameter of the C<$ircmsg> will have all CTCP messages stripped off.
 =item B<error $code $message $ircmsg>
 
 Emitted when any error occurs. C<$code> is the 3 digit error id string from RFC
-2812 and C<$message> is a description of the error. C<$ircmsg> is the complete
-error irc message.
+1459 or the string 'ERROR'. C<$message> is a description of the error.
+C<$ircmsg> is the complete error irc message.
 
 You may use AnyEvent::IRC::Util::rfc_code_to_name to convert C<$code> to the error
 name from the RFC 2812. eg.:
 
    rfc_code_to_name ('471') => 'ERR_CHANNELISFULL'
+
+NOTE: This event is also emitted when a 'ERROR' message is received.
 
 =item B<debug_send $prefix $command @params>
 
@@ -852,15 +854,9 @@ sub anymsg_cb {
 
    my $cmd = lc $msg->{command};
 
-   if (    $cmd ne "privmsg"
-       and $cmd ne "notice"
-       and $cmd ne "part"
-       and $cmd ne "join"
-       and not ($cmd >= 400 and $cmd <= 599)
-      )
-   {
+   if ($cmd =~ /^\d\d\d$/ && not ($cmd >= 400 && $cmd <= 599)) {
       $self->event (statmsg => $msg);
-   } elsif ($cmd >= 400 and $cmd <= 599) {
+   } elsif (($cmd >= 400 && $cmd <= 599) || $cmd eq 'error') {
       $self->event (error => $msg->{command}, $msg->{params}->[-1], $msg);
    }
 }
@@ -1176,7 +1172,7 @@ Robin Redeker, C<< <elmex@ta-sa.org> >>
 
 L<AnyEvent::IRC::Connection>
 
-RFC 2812 - Internet Relay Chat: Client Protocol
+RFC 1459 - Internet Relay Chat: Client Protocol
 
 =head1 COPYRIGHT & LICENSE
 

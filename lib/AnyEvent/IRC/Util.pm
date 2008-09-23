@@ -91,7 +91,7 @@ message will look like (pseudo code!)
 
    :<prefix> <command> <params> :<trail>
 
-Please refer to RFC 2812 how IRC messages normally look like.
+Please refer to RFC 1459 how IRC messages normally look like.
 
 The prefix will be omitted if they are C<undef>.
 
@@ -503,7 +503,7 @@ Robin Redeker, C<< <elmex@ta-sa.org> >>
 Internet Relay Chat Client To Client Protocol from February 2, 1997
 http://www.invlogic.com/irc/ctcp.html
 
-RFC 2812 - Internet Relay Chat: Client Protocol
+RFC 1459 - Internet Relay Chat: Client Protocol
 
 =head1 COPYRIGHT & LICENSE
 

@@ -1,7 +1,7 @@
 Revision history for AnyEvent::IRC
 
 0.6
-        - deprecated this module, use AnyEvent::IRC in future!
+        - deprecated Net::IRC3, use this module in future!
         - connect is done non blocking
         - major semantic change: you can't reuse a connection object,
           after the 'disconnect' event has been issued you have to recreate

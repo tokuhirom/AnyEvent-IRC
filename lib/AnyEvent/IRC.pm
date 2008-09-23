@@ -110,6 +110,7 @@ L<AnyEvent::IRC::Client::Connection>
 
 L<AnyEvent>
 
+RFC 1459 - Internet Relay Chat: Client Protocol
 RFC 2812 - Internet Relay Chat: Client Protocol
 
 =head1 BUGS
