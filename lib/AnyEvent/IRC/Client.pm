@@ -29,22 +29,33 @@ AnyEvent::IRC::Client - A highlevel IRC connection
          return;
       }
    });
-   $con->reg_cb (registered => sub { print "I'm in!\n" });
-   $con->reg_cb (disconnect => sub { print "I'm out!\n" });
+   $con->reg_cb (registered => sub { print "I'm in!\n"; });
+   $con->reg_cb (disconnect => sub { print "I'm out!\n"; $c->broadcast });
    $con->reg_cb (
       sent => sub {
+         my ($con) = @_;
+
          if ($_[2] eq 'PRIVMSG') {
             print "Sent message!\n";
-            $timer = AnyEvent->timer (after => 1, cb => sub { $c->broadcast });
+
+            $timer = AnyEvent->timer (
+               after => 1,
+               cb => sub {
+                  undef $timer;
+                  $con->disconnect ('done')
+               }
+            );
          }
       }
    );
 
-   $con->send_srv (PRIVMSG => 'elmex', "Hello there i'm the cool AnyEvent::IRC test script!");
+   $con->send_srv (
+      PRIVMSG => 'elmex',
+      "Hello there i'm the cool AnyEvent::IRC test script!"
+   );
 
+   $con->connect ("localhost", 6667, { nick => 'testbot' });
    $c->wait;
-   undef $timer;
-
    $con->disconnect;
 
 =head1 DESCRIPTION

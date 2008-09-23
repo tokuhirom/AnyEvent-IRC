@@ -16,9 +16,29 @@ AnyEvent::IRC::Connection - An IRC connection abstraction
 
 =head1 SYNOPSIS
 
-   #...
-   $con->send_msg ("PRIVMSG", "yournick", "Hello there!");
-   #...
+   use AnyEvent;
+   use AnyEvent::IRC::Connection;
+
+   my $c = AnyEvent->condvar;
+
+   my $con = new AnyEvent::IRC::Connection;
+
+   $con->connect ("localhost", 6667);
+
+   $con->reg_cb (
+      connect => sub {
+         my ($con) = @_;
+         $con->send_msg (NICK => 'testbot');
+         $con->send_msg (USER => 'testbot', '*', '0', 'testbot');
+      },
+      irc_001 => sub {
+         my ($con) = @_;
+         print "$_[1]->{prefix} says i'm in the IRC: $_[1]->{params}->[-1]!\n";
+         $c->broadcast;
+      }
+   );
+
+   $c->wait;
 
 =head1 DESCRIPTION
 

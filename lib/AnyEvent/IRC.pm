@@ -11,11 +11,11 @@ AnyEvent::IRC - An event system independend IRC protocol module
 
 =head1 VERSION
 
-Version 0.5
+Version 0.6
 
 =cut
 
-our $VERSION = '0.5';
+our $VERSION = '0.6';
 
 =head1 SYNOPSIS
 
@@ -30,67 +30,83 @@ Using the simplistic L<AnyEvent::IRC::Connection>:
 
    $con->connect ("localhost", 6667);
 
-   $con->reg_cb (irc_001 => sub { print "$_[1]->{prefix} says i'm in the IRC: $_[1]->{trailing}!\n"; $c->broadcast; 0 });
-   $con->send_msg (NICK => undef, "testbot");
-   $con->send_msg (USER => 'testbot', "testbot", '*', '0');
+   $con->reg_cb (
+      connect => sub {
+         my ($con) = @_;
+         $con->send_msg (NICK => 'testbot');
+         $con->send_msg (USER => 'testbot', '*', '0', 'testbot');
+      },
+      irc_001 => sub {
+         my ($con) = @_;
+         print "$_[1]->{prefix} says i'm in the IRC: $_[1]->{params}->[-1]!\n";
+         $c->broadcast;
+      }
+   );
 
    $c->wait;
 
-Using the more sophisticatd L<AnyEvent::IRC::Client::Connection>:
+Using the more sophisticated L<AnyEvent::IRC::Client>:
 
    use AnyEvent;
-   use AnyEvent::IRC::Client::Connection;
+   use AnyEvent::IRC::Client;
 
    my $c = AnyEvent->condvar;
 
    my $timer;
-   my $con = new AnyEvent::IRC::Client::Connection;
+   my $con = new AnyEvent::IRC::Client;
 
-   $con->reg_cb (registered => sub { print "I'm in!\n"; 0 });
-   $con->reg_cb (disconnect => sub { print "I'm out!\n"; 0 });
+   $con->reg_cb (registered => sub { print "I'm in!\n"; });
+   $con->reg_cb (disconnect => sub { print "I'm out!\n"; $c->broadcast });
    $con->reg_cb (
       sent => sub {
+         my ($con) = @_;
+
          if ($_[2] eq 'PRIVMSG') {
             print "Sent message!\n";
-            $timer = AnyEvent->timer (after => 1, cb => sub { $c->broadcast });
+
+            $timer = AnyEvent->timer (
+               after => 1,
+               cb => sub {
+                  undef $timer;
+                  $con->disconnect ('done')
+               }
+            );
          }
-         1
       }
    );
 
-   $con->send_srv (PRIVMSG => "Hello there i'm the cool AnyEvent::IRC test script!", 'elmex');
+   $con->send_srv (
+      PRIVMSG => 'elmex',
+      "Hello there i'm the cool AnyEvent::IRC test script!"
+   );
 
-   $con->connect ("localhost", 6667);
-   $con->register (qw/testbot testbot testbot/);
-
+   $con->connect ("localhost", 6667, { nick => 'testbot' });
    $c->wait;
-   undef $timer;
-
    $con->disconnect;
 
 =head1 DESCRIPTION
 
-The L<AnyEvent::IRC> module consists of L<AnyEvent::IRC::Connection>, L<AnyEvent::IRC::Client::Connection>
-and L<AnyEvent::IRC::Util>. L<AnyEvent::IRC> only contains this documentation.
-It manages connections and parses and constructs IRC messages.
+The L<AnyEvent::IRC> module consists of L<AnyEvent::IRC::Connection>,
+L<AnyEvent::IRC::Client> and L<AnyEvent::IRC::Util>. L<AnyEvent::IRC>
+is just a module that holds this overview over the other modules.
 
 L<AnyEvent::IRC> can be viewed as toolbox for handling IRC connections
 and communications. It won't do everything for you, and you still
 need to know a few details of the IRC protocol.
 
-L<AnyEvent::IRC::Client::Connection> is a more highlevel IRC connection
+L<AnyEvent::IRC::Client> is a more highlevel IRC connection
 that already processes some messages for you and will generated some
-events that are maybe useful to you. It will also do PING replies for you
-and manage channels a bit.
+events that are maybe useful to you. It will also do PING replies for you,
+manage channels a bit, nicknames and CTCP.
 
 L<AnyEvent::IRC::Connection> is a lowlevel connection that only connects
 to the server and will let you send and receive IRC messages.
 L<AnyEvent::IRC::Connection> does not imply any client behaviour, you could also
 use it to implement an IRC server.
 
-Note that the *::Connection module uses AnyEvent as it's IO event subsystem.
+Note that these modules use L<AnyEvent> as it's IO event subsystem.
 You can integrate them into any application with a event system
-that AnyEvent has support for (eg. L<Gtk2> or L<Event>).
+that L<AnyEvent> has support for (eg. L<Gtk2> or L<Event>).
 
 =head1 EXAMPLES
 
@@ -106,7 +122,7 @@ L<AnyEvent::IRC::Util>
 
 L<AnyEvent::IRC::Connection>
 
-L<AnyEvent::IRC::Client::Connection>
+L<AnyEvent::IRC::Client>
 
 L<AnyEvent>
 
@@ -155,7 +171,8 @@ Thanks to Marc Lehmann for the new AnyEvent module!
 
 And these people have helped to work on L<AnyEvent::IRC>:
 
-   * Maximilian Gaß - Added support for ISUPPORT and CASEMAPPING
+   * Maximilian Gaß - Added support for ISUPPORT and CASEMAPPING.
+   * Zaba           - Thanks for the useful input about IRC.
 
 =head1 COPYRIGHT & LICENSE
 
