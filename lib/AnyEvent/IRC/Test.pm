@@ -83,11 +83,11 @@ sub test_init {
       $CL->reg_cb (
          debug_send => sub {
             my ($CL, $prefix, $command, @params) = @_;
-            warn "1 SEND: ".mk_msg ($prefix, $command, @params);
+            warn "1 SEND: " . mk_msg ($prefix, $command, @params) . "\n";
          },
          debug_recv => sub {
             my ($CL, $msg) = @_;
-            warn "1 RECV: ".mk_msg ($msg->{prefix}, $msg->{command}, @{$msg->{params}});
+            warn "1 RECV: " . mk_msg ($msg->{prefix}, $msg->{command}, @{$msg->{params}}) . "\n";
          }
       );
    }
@@ -122,11 +122,11 @@ sub test_init {
          $CL2->reg_cb (
             debug_send => sub {
                my ($CL2, $prefix, $command, @params) = @_;
-               warn "2 SEND: ".mk_msg ($prefix, $command, @params);
+               warn "2 SEND: " . mk_msg ($prefix, $command, @params) . "\n";
             },
             debug_recv => sub {
                my ($CL2, $msg) = @_;
-               warn "2 RECV: ".mk_msg ($msg->{prefix}, $msg->{command}, @{$msg->{params}});
+               warn "2 RECV: " . mk_msg ($msg->{prefix}, $msg->{command}, @{$msg->{params}}) . "\n";
             }
          );
       }
