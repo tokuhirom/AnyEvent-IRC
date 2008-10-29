@@ -3,7 +3,6 @@ use strict;
 use Test::More;
 use AnyEvent::IRC::Test;
 use AnyEvent::IRC::Util qw/prefix_nick/;
-use JSON;
 
 test_init (11, 1);
 

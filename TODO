@@ -5,3 +5,6 @@
 - add TOPIC support
 - add support for KILL!
 - capture error 433/ERR_NICKNAMEINUSE if the automatic renamer is active
+
+- sigpipe note hinzufuegen
+  - autocork is no fix, recommend ignore sigpipe

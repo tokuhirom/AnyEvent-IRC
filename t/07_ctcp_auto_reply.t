@@ -3,7 +3,6 @@ use strict;
 use Test::More;
 use AnyEvent::IRC::Test;
 use AnyEvent::IRC::Util qw/encode_ctcp/;
-use JSON;
 
 test_init (4, 1);
 
