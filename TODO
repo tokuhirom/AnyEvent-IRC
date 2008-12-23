@@ -7,4 +7,4 @@
 - capture error 433/ERR_NICKNAMEINUSE if the automatic renamer is active
 
 - sigpipe note hinzufuegen
-  - autocork is no fix, recommend ignore sigpipe
+- autocork is no fix, recommend ignore sigpipe
