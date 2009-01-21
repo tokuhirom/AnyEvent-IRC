@@ -11,11 +11,11 @@ AnyEvent::IRC - An event system independend IRC protocol module
 
 =head1 VERSION
 
-Version 0.6
+Version 0.7
 
 =cut
 
-our $VERSION = '0.6';
+our $VERSION = '0.7';
 
 =head1 SYNOPSIS
 
