@@ -51,7 +51,7 @@ AnyEvent::IRC::Client - A highlevel IRC connection
 
    $con->send_srv (
       PRIVMSG => 'elmex',
-      "Hello there i'm the cool AnyEvent::IRC test script!"
+      "Hello there I'm the cool AnyEvent::IRC test script!"
    );
 
    $con->connect ("localhost", 6667, { nick => 'testbot' });
@@ -85,7 +85,7 @@ structures I'm using lower case for the channel names.
 The returned hash from C<channel_list> for example has the lower case of the
 joined channels as keys.
 
-But i tried to preserve the case in all events that are emitted.
+But I tried to preserve the case in all events that are emitted.
 Please keep this in mind when handling the events.
 
 For example a user might joins #TeSt and parts #test later.

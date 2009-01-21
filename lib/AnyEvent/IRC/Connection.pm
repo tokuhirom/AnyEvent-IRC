@@ -33,7 +33,7 @@ AnyEvent::IRC::Connection - An IRC connection abstraction
       },
       irc_001 => sub {
          my ($con) = @_;
-         print "$_[1]->{prefix} says i'm in the IRC: $_[1]->{params}->[-1]!\n";
+         print "$_[1]->{prefix} says I'm in the IRC: $_[1]->{params}->[-1]!\n";
          $c->broadcast;
       }
    );
@@ -112,8 +112,7 @@ sub connect {
             },
             on_drain => sub {
                $self->event ('buffer_empty');
-            },
-            autocork => 1,
+            }
          );
 
       $self->event ('connect');
