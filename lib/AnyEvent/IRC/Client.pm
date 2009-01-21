@@ -1195,7 +1195,7 @@ RFC 1459 - Internet Relay Chat: Client Protocol
 
 =head1 COPYRIGHT & LICENSE
 
-Copyright 2006 Robin Redeker, all rights reserved.
+Copyright 2006-2009 Robin Redeker, all rights reserved.
 
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself.
