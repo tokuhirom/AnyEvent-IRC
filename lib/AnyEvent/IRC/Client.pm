@@ -218,7 +218,7 @@ name from the RFC 2812. eg.:
 
 NOTE: This event is also emitted when a 'ERROR' message is received.
 
-=item B<debug_send $prefix $command @params>
+=item B<debug_send $command @params>
 
 Is emitted everytime some command is sent.
 
