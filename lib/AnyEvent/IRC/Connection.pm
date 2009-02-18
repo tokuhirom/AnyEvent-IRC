@@ -62,12 +62,14 @@ sub new {
   my $this = shift;
   my $class = ref($this) || $this;
 
-  my $self = { heap => {} };
+  my $self = $class->SUPER::new (@_);
 
   bless $self, $class;
 
   return $self;
 }
+
+sub default_callback_argument { 'self' }
 
 =item B<connect ($host, $port)>
 
