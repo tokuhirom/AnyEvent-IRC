@@ -1,5 +1,10 @@
 Revision history for AnyEvent::IRC
 
+0.7     Wed Jan 21 20:46:39 CET 2009
+        - removed autocork hack, as AnyEvent ignores SIGPIPE now.
+        - removed maintainer tests from distribution.
+        - removed JSON dependency.
+
 0.6     Tue Sep 23 14:41:43 CEST 2008
         - deprecated Net::IRC3, use this module in future!
         - connect is done non blocking

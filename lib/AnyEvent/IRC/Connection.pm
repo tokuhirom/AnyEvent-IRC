@@ -33,7 +33,7 @@ AnyEvent::IRC::Connection - An IRC connection abstraction
       },
       irc_001 => sub {
          my ($con) = @_;
-         print "$_[1]->{prefix} says i'm in the IRC: $_[1]->{params}->[-1]!\n";
+         print "$_[1]->{prefix} says I'm in the IRC: $_[1]->{params}->[-1]!\n";
          $c->broadcast;
       }
    );
@@ -62,12 +62,14 @@ sub new {
   my $this = shift;
   my $class = ref($this) || $this;
 
-  my $self = { heap => {} };
+  my $self = $class->SUPER::new (@_);
 
   bless $self, $class;
 
   return $self;
 }
+
+sub default_callback_argument { 'self' }
 
 =item B<connect ($host, $port)>
 
@@ -112,8 +114,7 @@ sub connect {
             },
             on_drain => sub {
                $self->event ('buffer_empty');
-            },
-            autocork => 1,
+            }
          );
 
       $self->event ('connect');
@@ -255,7 +256,7 @@ L<AnyEvent::IRC::Client>
 
 =head1 COPYRIGHT & LICENSE
 
-Copyright 2006 Robin Redeker, all rights reserved.
+Copyright 2006-2009 Robin Redeker, all rights reserved.
 
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself.

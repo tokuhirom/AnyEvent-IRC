@@ -10,9 +10,9 @@ WriteMakefile(
     ABSTRACT_FROM       => 'lib/AnyEvent/IRC.pm',
     PL_FILES            => {},
     PREREQ_PM => {
-        'Test::More' => 0,
-        'AnyEvent'   => 0,
-        'Object::Event' => '0.5',
+        'Test::More'    => 0,
+        'AnyEvent'      => 0,
+        'Object::Event' => '1.0',
     },
     dist                => {
        COMPRESS => 'gzip -9f',

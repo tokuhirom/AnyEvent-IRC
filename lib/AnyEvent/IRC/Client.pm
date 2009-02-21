@@ -51,7 +51,7 @@ AnyEvent::IRC::Client - A highlevel IRC connection
 
    $con->send_srv (
       PRIVMSG => 'elmex',
-      "Hello there i'm the cool AnyEvent::IRC test script!"
+      "Hello there I'm the cool AnyEvent::IRC test script!"
    );
 
    $con->connect ("localhost", 6667, { nick => 'testbot' });
@@ -85,7 +85,7 @@ structures I'm using lower case for the channel names.
 The returned hash from C<channel_list> for example has the lower case of the
 joined channels as keys.
 
-But i tried to preserve the case in all events that are emitted.
+But I tried to preserve the case in all events that are emitted.
 Please keep this in mind when handling the events.
 
 For example a user might joins #TeSt and parts #test later.
@@ -218,7 +218,7 @@ name from the RFC 2812. eg.:
 
 NOTE: This event is also emitted when a 'ERROR' message is received.
 
-=item B<debug_send $prefix $command @params>
+=item B<debug_send $command @params>
 
 Is emitted everytime some command is sent.
 
@@ -299,6 +299,8 @@ sub new {
    return $self;
 }
 
+sub default_callback_argument { 'self' }
+
 =item B<connect ($host, $port [, $info])>
 
 This method does the same as the C<connect> method of L<AnyEvent::Connection>,
@@ -331,7 +333,7 @@ sub connect {
                );
             }
 
-            $self->unreg_me;
+            $self->current->unreg_me;
          }
       );
    }
@@ -909,7 +911,7 @@ sub welcome_cb {
       return;
    }
 
-   $self->unreg_me;
+   $self->current->unreg_me;
    $self->{registered} = 1;
    $self->event ('registered');
 }
@@ -1113,7 +1115,7 @@ sub change_nick_login_cb {
    my ($self, $msg) = @_;
 
    if ($self->registered) {
-      $self->unreg_me;
+      $self->current->unreg_me;
 
    } else {
       my $newnick = $self->{nick_change}->($self->nick);
@@ -1195,7 +1197,7 @@ RFC 1459 - Internet Relay Chat: Client Protocol
 
 =head1 COPYRIGHT & LICENSE
 
-Copyright 2006 Robin Redeker, all rights reserved.
+Copyright 2006-2009 Robin Redeker, all rights reserved.
 
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself.
