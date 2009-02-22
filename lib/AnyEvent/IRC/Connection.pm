@@ -69,8 +69,6 @@ sub new {
   return $self;
 }
 
-sub default_callback_argument { 'self' }
-
 =item B<connect ($host, $port)>
 
 Tries to open a socket to the host C<$host> and the port C<$port>.

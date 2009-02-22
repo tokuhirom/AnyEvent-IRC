@@ -299,8 +299,6 @@ sub new {
    return $self;
 }
 
-sub default_callback_argument { 'self' }
-
 =item B<connect ($host, $port [, $info])>
 
 This method does the same as the C<connect> method of L<AnyEvent::Connection>,
