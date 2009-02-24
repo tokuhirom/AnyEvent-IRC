@@ -331,7 +331,7 @@ sub connect {
                );
             }
 
-            $self->current->unreg_me;
+            $self->unreg_me;
          }
       );
    }
@@ -909,7 +909,7 @@ sub welcome_cb {
       return;
    }
 
-   $self->current->unreg_me;
+   $self->unreg_me;
    $self->{registered} = 1;
    $self->event ('registered');
 }
@@ -1113,7 +1113,7 @@ sub change_nick_login_cb {
    my ($self, $msg) = @_;
 
    if ($self->registered) {
-      $self->current->unreg_me;
+      $self->unreg_me;
 
    } else {
       my $newnick = $self->{nick_change}->($self->nick);
