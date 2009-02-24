@@ -1,0 +1,111 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" 
+	"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+<title>AnyEvent::XMPP</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<!-- metadata -->
+<meta name="generator" content="S5" />
+<meta name="version" content="S5 1.1" />
+<meta name="presdate" content="20080215" />
+<meta name="author" content="Robin Redeker" />
+<meta name="company" content="nethype GmbH" />
+ configuration parameters -->
+<meta name="defaultView" content="slideshow" />
+<meta name="controlVis" content="hidden" />
+<!-- style sheet links -->
+<link rel="stylesheet" href="ui/elmex/slides.css" type="text/css" media="projection" id="slideProj" />
+<link rel="stylesheet" href="ui/elmex/outline.css" type="text/css" media="screen" id="outlineStyle" />
+<link rel="stylesheet" href="ui/elmex/print.css" type="text/css" media="print" id="slidePrint" />
+<link rel="stylesheet" href="ui/elmex/opera.css" type="text/css" media="projection" id="operaFix" />
+<!-- S5 JS -->
+<script src="ui/elmex/slides.js" type="text/javascript"></script>
+</head>
+<body>
+
+<div class="layout">
+<div id="controls"><!-- DO NOT EDIT --></div>
+<div id="currentSlide"><!-- DO NOT EDIT --></div>
+<div id="header"></div>
+<div id="footer">
+<h1>Deutscher Perl-Workshop 2009</h1>
+<h2>AnyEvent::IRC - Event basierte IRC Toolbox für Perl</h2>
+</div>
+
+</div>
+
+
+<div class="presentation">
+
+<div class="slide">
+<h1>AnyEvent::IRC - Event basiert IRC Toolbox für Perl</h1>
+<h3>Robin Redeker</h3>
+</div>
+
+<div class="slide">
+   <h1>Was ist IRC (Internet Relay Chat)?</h1>
+   <ul class="incremental">
+        <li>Ein (altes) Realzeit Chat Protokoll für Internet.</li>
+        <li>Server verbunden in einer Sterntopologie.</li>
+        <li>Alt: RFC 1459 ist von 1993.</li>
+        <li>2000 gabs dann die neuen IRCnet RFCs: 2810-2813.</li>
+        <li>Seit 1993 entwickelten IRC Server/Netze unabhängig erweiterungen.</li>
+   </ul>
+</div>
+
+<div class="slide">
+   <h1>AnyEvent::IRC</h1>
+   <ul class="incremental">
+      <li>Ein (pure) Perl Modul für das IRC Client Protokoll.</li>
+      <li>100% non-blocking (dank AnyEvent::Socket &amp; AnyEvent::Handle).</li>
+      <li>Event basiert.</li>
+      <li>Aufspaltung:
+         <ul class="incremental">
+            <li>AnyEvent::IRC::Client highlevel client API.</li>
+            <li>AnyEvent::IRC::Connection low-level Protokoll handler.</li>
+         </ul>
+      </li>
+
+   </ul>
+</div>
+
+<div class="slide">
+   <h1>Neues von AnyEvent::IRC</h1>
+   <ul class="incremental">
+      <li>Ursprünglich Net::IRC3.</li>
+      <li>Callback Registrierungs API Object::Event (u.a. benutzt von AnyEvent::XMPP).</li>
+      <li>ISUPPORT Unterstützung (Auto Erkennung des Case-Mappings und div. neuer Protokoll Erweiterungen).</li>
+      <li>100% Non-blocking (Net::IRC3 hatte blocking DNS).</li>
+      <li>Diverse API Korrekturen.</li>
+   </ul>
+</div>
+
+<div class="slide">
+   <h1>Beispiel - Script</h1>
+<pre>
+#!/opt/perl/bin/perl
+use AnyEvent;
+use AnyEvent::IRC::Client;
+
+my $con = AnyEvent::IRC::Client-&gt;new;
+$con-&gt;reg_cb (
+   connect =&gt; sub {
+      # Fehlerbehandlung etc...
+   },
+   privatemsg =&gt; sub {
+      my ($con, $nick, $msg) = @_;
+      print "Private Nachricht von $msg-&gt;{prefix}:\n"
+           ."$msg-&gt;{params}-&gt;[1]\n";
+   }
+);
+$con-&gt;connect ("irc.freenode.net", 6667, { nick =&gt; "elmex" });
+AnyEvent-&gt;condvar-&gt;recv; # Event loop starten
+</pre>
+</div>
+
+</div>
+
+</body>
+</html>

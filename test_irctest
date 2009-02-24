@@ -1,7 +1,7 @@
 #!/bin/bash
 
 if [ "$1" = "versions" ]; then
-   for i in `seq 6667 6686`; do echo -n $i; echo -n ": "; perl samples/version_dump 192.168.5.10 $i; done
+   for i in `seq 6667 6686`; do echo -n $i; echo -n ": "; perl samples/version_dump 192.168.2.110 $i; done
    exit
 fi
 
@@ -41,21 +41,21 @@ if [ ! "$SERVER" = "" ]; then
    exit
 fi
 
-test_network 192.168.5.10 6667 0
-test_network 192.168.5.10 6668 0
-test_network 192.168.5.10 6669 0
-test_network 192.168.5.10 6670 3
-test_network 192.168.5.10 6671 3
-test_network 192.168.5.10 6672 0
-test_network 192.168.5.10 6673 0
-test_network 192.168.5.10 6674 3
-test_network 192.168.5.10 6675 0
-test_network 192.168.5.10 6676 0
-test_network 192.168.5.10 6677 2
-test_network 192.168.5.10 6678 2
-test_network 192.168.5.10 6679 3
-test_network 192.168.5.10 6680 3
-test_network 192.168.5.10 6681 0
-test_network 192.168.5.10 6682 0
-test_network 192.168.5.10 6683 3
-test_network 192.168.5.10 6684 0
+test_network 192.168.2.110 6667 0
+test_network 192.168.2.110 6668 0
+test_network 192.168.2.110 6669 0
+test_network 192.168.2.110 6670 3
+test_network 192.168.2.110 6671 3
+test_network 192.168.2.110 6672 0
+test_network 192.168.2.110 6673 0
+test_network 192.168.2.110 6674 3
+test_network 192.168.2.110 6675 0
+test_network 192.168.2.110 6676 0
+test_network 192.168.2.110 6677 2
+test_network 192.168.2.110 6678 2
+test_network 192.168.2.110 6679 3
+test_network 192.168.2.110 6680 3
+test_network 192.168.2.110 6681 0
+test_network 192.168.2.110 6682 0
+test_network 192.168.2.110 6683 3
+test_network 192.168.2.110 6684 0
