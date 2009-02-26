@@ -47,11 +47,10 @@
 <div class="slide">
    <h1>Was ist IRC (Internet Relay Chat)?</h1>
    <ul class="incremental">
-        <li>Ein Real-Zeit Chat Protokoll für das Internet.</li>
-        <li>Server bilden Netzte mit Stern Topologie.</li>
-        <li>Alt: RFC 1459 ist von 1993.</li>
-        <li>2000 gab es dann die neuen IRCnet RFCs: RFC 2810-2813.</li>
-        <li>Seit 1993 entwickelten IRC Server/Netze unabhängig Erweiterungen.</li>
+        <li>Ein Echtzeit Chat Protokoll für das Internet.</li>
+        <li>Server bilden Netzte mit Baum Struktur.</li>
+        <li>Alt: RFC 1459 ist von 1993 (Gibt neue seit 2000).</li>
+        <li>IRC Server/Netze haben unabhängig Erweiterungen eingebaut.</li>
    </ul>
 </div>
 
@@ -62,7 +61,7 @@
       <li>Nicht blockierende I/O.</li>
       <li>Event basiert.</li>
       <li>Klassen:
-         <ul class="incremental">
+         <ul>
             <li>AnyEvent::<b>IRC::Connection</b> low-level Protokoll Handler.</li>
             <li>AnyEvent::<b>IRC::Client</b> highlevel Client API.</li>
          </ul>
