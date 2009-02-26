@@ -1,6 +1,6 @@
 /* Following are the presentation styles -- edit away! */
 
-body {background: #FFF url(bodybg.png) -16px 0 no-repeat; color: #000; font-size: 2em;}
+body {background: #000 url(bodybg.png) -16px 0 no-repeat; color: #FFF; font-size: 2em;}
 :link, :visited {text-decoration: none; color: #00C;}
 #controls :active {color: #88A !important;}
 #controls :focus {outline: 1px dotted #227;}
@@ -18,10 +18,10 @@ blockquote b i {font-style: italic;}
 kbd {font-weight: bold; font-size: 1em;}
 sup {font-size: smaller; line-height: 1px;}
 
-.slide code {padding: 2px 0.25em; font-weight: bold; color: #533;}
+.slide code {padding: 2px 0.25em; font-weight: bold; color: #AAA;}
 .slide code.bad, code del {color: red;}
 .slide code.old {color: silver;}
-.slide pre {padding: 0; margin: 0.25em 0 0.5em 0.5em; color: #533; font-size: 90%;}
+.slide pre {padding: 0; margin: 0.25em 0 0.5em 0.5em; color: #AAA; font-size: 90%;}
 .slide pre code {display: block;}
 .slide ul {margin-left: 5%; margin-right: 7%; list-style: disc;}
 .slide li {margin-top: 0.75em; margin-right: 0;}
@@ -63,7 +63,7 @@ div#controls form {position: absolute; bottom: 0; right: 0; width: 100%;
 #slide0 {padding-top: 3.5em; font-size: 90%;}
 #slide0 h1 {position: static; margin: 1em 0 0; padding: 0;
    font: bold 2em Helvetica, sans-serif; white-space: normal;
-   color: #000; background: transparent;}
+   color: #FFF; background: transparent;}
 #slide0 h2 {font: bold italic 1em Helvetica, sans-serif; margin: 0.25em;}
 #slide0 h3 {margin-top: 1.5em; font-size: 1.5em;}
 #slide0 h4 {margin-top: 0; font-size: 1em;}
@@ -75,9 +75,9 @@ ul.urls {list-style: none; display: inline; margin: 0;}
 html>body .external {border-bottom: none;}
 .external:after {content: " \274F"; font-size: smaller; color: #77B;}
 
-.incremental, .incremental *, .incremental *:after {color: #DDE; visibility: visible;}
+.incremental, .incremental *, .incremental *:after {color: #111; visibility: visible;}
 img.incremental {visibility: hidden;}
-.slide .current {color: #B02;}
+.slide .current {color: #FFF;}
 
 
 /* diagnostics
