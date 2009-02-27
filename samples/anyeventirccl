@@ -54,8 +54,8 @@ $pc->reg_cb (
 
 # these commands will queue until the connection
 # is completly registered and has a valid nick etc.
-$pc->send_srv ("JOIN", "#test4");
-$pc->send_chan ("#test4", "PRIVMSG", "#test", "hi, i'm a bot!");
+$pc->send_srv ("JOIN", "#test");
+$pc->send_chan ("#test", "PRIVMSG", "#test", "hi, i'm a bot!");
 
 $pc->connect (
    "irc.freenode.net", 6667, { nick => 'net_irc3', user => 'net_irc3', real => 'test bot' }
