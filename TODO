@@ -1,3 +1,6 @@
+- add CAP support, and STARTTLS
+   http://wiki.inspircd.org/STARTTLS_Documentation
+   http://www.leeh.co.uk/draft-mitchell-irc-capabilities-02.html
 - add TOPIC support
 - add support for KILL!
 - document irc_ events.
