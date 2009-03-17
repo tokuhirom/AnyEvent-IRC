@@ -1,2 +1,3 @@
 - add TOPIC support
 - add support for KILL!
+- document irc_ events.

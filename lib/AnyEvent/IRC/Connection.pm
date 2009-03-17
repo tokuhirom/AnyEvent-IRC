@@ -205,11 +205,11 @@ registering event callbacks.
 
 =over 4
 
-=item B<connect>
+=item B<connect $error>
 
 This event is generated when the socket was successfully connected
 or an error occurred while connecting. The error is given as second
-argument to the callback then.
+argument (C<$error>) to the callback then.
 
 =item B<disconnect $reason>
 
