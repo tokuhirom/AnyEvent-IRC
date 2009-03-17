@@ -97,13 +97,13 @@ Use C<reg_cb> as described in L<Object::Event> to register to such an event.
 
 =over 4
 
-=item B<registered>
+=item registered
 
 Emitted when the connection got successfully registered and the end of the MOTD
 (IRC command 376 or 422 (No MOTD file found)) was seen, so you can start sending
 commands and all ISUPPORT/PROTOCTL handshaking has been done.
 
-=item B<channel_add $msg, $channel @nicks>
+=item channel_add => $msg, $channel, @nicks
 
 Emitted when C<@nicks> are added to the channel C<$channel>,
 this happens for example when someone JOINs a channel or when you
@@ -112,7 +112,7 @@ get a RPL_NAMREPLY (see RFC1459).
 
 C<$msg> is the IRC message hash that as returned by C<parse_irc_msg>.
 
-=item B<channel_remove $msg, $channel @nicks>
+=item channel_remove => $msg, $channel, @nicks
 
 Emitted when C<@nicks> are removed from the channel C<$channel>,
 happens for example when they PART, QUIT or get KICKed.
@@ -120,54 +120,54 @@ happens for example when they PART, QUIT or get KICKed.
 C<$msg> is the IRC message hash that as returned by C<parse_irc_msg>
 or undef if the reason for the removal was a disconnect on our end.
 
-=item B<channel_change $msg $channel $old_nick $new_nick $is_myself>
+=item channel_change => $msg, $channel, $old_nick, $new_nick, $is_myself
 
 Emitted when a nickname on a channel changes. This is emitted when a NICK
 change occurs from C<$old_nick> to C<$new_nick> give the application a chance
 to quickly analyze what channels were affected.  C<$is_myself> is true when
 yourself was the one who changed the nick.
 
-=item B<channel_nickmode_update $channel $dest>
+=item channel_nickmode_update => $channel, $dest
 
 This event is emitted when the (user) mode (eg. op status) of an occupant of
 a channel changes. C<$dest> is the nickname on the C<$channel> who's mode was
 updated.
 
-=item B<channel_topic $channel $topic $who>
+=item channel_topic => $channel, $topic, $who
 
 This is emitted when the topic for a channel is discovered. C<$channel>
 is the channel for which C<$topic> is the current topic now.
 Which is set by C<$who>. C<$who> might be undefined when it's not known
 who set the channel topic.
 
-=item B<ident_change $nick $ident>
+=item ident_change => $nick, $ident
 
 Whenever the user and host of C<$nick> has been determined or a change
 happened this event is emitted.
 
-=item B<join $nick $channel $is_myself>
+=item join => $nick, $channel, $is_myself
 
 Emitted when C<$nick> enters the channel C<$channel> by JOINing.
 C<$is_myself> is true if yourself are the one who JOINs.
 
-=item B<part $nick $channel $is_myself $msg>
+=item part => $nick, $channel, $is_myself, $msg
 
 Emitted when C<$nick> PARTs the channel C<$channel>.
 C<$is_myself> is true if yourself are the one who PARTs.
 C<$msg> is the PART message.
 
-=item B<part $kicked_nick $channel $is_myself $msg>
+=item part => $kicked_nick, $channel, $is_myself, $msg
 
 Emitted when C<$kicked_nick> is KICKed from the channel C<$channel>.
 C<$is_myself> is true if yourself are the one who got KICKed.
 C<$msg> is the PART message.
 
-=item B<nick_change $old_nick $new_nick $is_myself>
+=item nick_change => $old_nick, $new_nick, $is_myself
 
 Emitted when C<$old_nick> is renamed to C<$new_nick>.
 C<$is_myself> is true when yourself was the one who changed the nick.
 
-=item B<ctcp $src, $target, $tag, $msg, $type>
+=item ctcp => $src, $target, $tag, $msg, $type
 
 Emitted when a CTCP message was found in either a NOTICE or PRIVMSG
 message. C<$tag> is the CTCP message tag. (eg. "PING", "VERSION", ...).
@@ -177,7 +177,7 @@ C<$src> is the source nick the message came from.
 C<$target> is the target nickname (yours) or the channel the ctcp was sent
 on.
 
-=item B<"ctcp_$tag", $src, $target, $msg, $type>
+=item "ctcp_$tag", => $src, $target, $msg, $type
 
 Emitted when a CTCP message was found in either a NOTICE or PRIVMSG
 message. C<$tag> is the CTCP message tag (in lower case). (eg. "ping", "version", ...).
@@ -187,25 +187,25 @@ C<$src> is the source nick the message came from.
 C<$target> is the target nickname (yours) or the channel the ctcp was sent
 on.
 
-=item B<quit $nick $msg>
+=item quit => $nick, $msg
 
 Emitted when the nickname C<$nick> QUITs with the message C<$msg>.
 
-=item B<publicmsg $channel $ircmsg>
+=item publicmsg => $channel, $ircmsg
 
 Emitted for NOTICE and PRIVMSG where the target C<$channel> is a channel.
 C<$ircmsg> is the original IRC message hash like it is returned by C<parse_irc_msg>.
 
 The last parameter of the C<$ircmsg> will have all CTCP messages stripped off.
 
-=item B<privatemsg $nick $ircmsg>
+=item privatemsg => $nick, $ircmsg
 
 Emitted for NOTICE and PRIVMSG where the target C<$nick> (most of the time you) is a nick.
 C<$ircmsg> is the original IRC message hash like it is returned by C<parse_irc_msg>.
 
 The last parameter of the C<$ircmsg> will have all CTCP messages stripped off.
 
-=item B<error $code $message $ircmsg>
+=item error => $code, $message, $ircmsg
 
 Emitted when any error occurs. C<$code> is the 3 digit error id string from RFC
 1459 or the string 'ERROR'. C<$message> is a description of the error.
@@ -218,11 +218,11 @@ name from the RFC 2812. eg.:
 
 NOTE: This event is also emitted when a 'ERROR' message is received.
 
-=item B<debug_send $command @params>
+=item debug_send => $command, @params
 
 Is emitted everytime some command is sent.
 
-=item B<debug_recv $ircmsg>
+=item debug_recv => $ircmsg
 
 Is emitted everytime some command was received.
 
@@ -232,7 +232,7 @@ Is emitted everytime some command was received.
 
 =over 4
 
-=item B<new>
+=item $cl = AnyEvent::IRC::Client->new ()
 
 This constructor takes no arguments.
 
@@ -299,7 +299,9 @@ sub new {
    return $self;
 }
 
-=item B<connect ($host, $port [, $info])>
+=item $cl->connect ($host, $port)
+
+=item $cl->connect ($host, $port, $info)
 
 This method does the same as the C<connect> method of L<AnyEvent::Connection>,
 but if the C<$info> parameter is passed it will automatically register with the
@@ -339,7 +341,7 @@ sub connect {
    $self->SUPER::connect ($host, $port);
 }
 
-=item B<register ($nick, $user, $real, $server_pass)>
+=item $cl->register ($nick, $user, $real, $server_pass)
 
 Sends the IRC registration commands NICK and USER.
 If C<$server_pass> is passed also a PASS command is generated.
@@ -363,7 +365,7 @@ sub register {
    $self->send_msg ("USER", $user || $nick, "*", "0", $real || $nick);
 }
 
-=item B<set_nick_change_cb $callback>
+=item $cl->set_nick_change_cb ($callback)
 
 This method lets you modify the nickname renaming mechanism when registering
 the connection. C<$callback> is called with the current nickname as first
@@ -387,7 +389,7 @@ sub set_nick_change_cb {
    $self->{nick_change} = $cb;
 }
 
-=item B<nick ()>
+=item $cl->nick ()
 
 Returns the current nickname, under which this connection
 is registered at the IRC server. It might be different from the
@@ -398,7 +400,7 @@ on login.
 
 sub nick { $_[0]->{nick} }
 
-=item B<is_my_nick ($string)>
+=item $cl->is_my_nick ($string)
 
 This returns true if C<$string> is the nick of ourself.
 
@@ -409,7 +411,7 @@ sub is_my_nick {
    $self->eq_str ($string, $self->nick);
 }
 
-=item B<registered ()>
+=item $cl->registered ()
 
 Returns a true value when the connection has been registered successful and
 you can send commands.
@@ -418,7 +420,9 @@ you can send commands.
 
 sub registered { $_[0]->{registered} }
 
-=item B<channel_list ([$channel])>
+=item $cl->channel_list ()
+
+=item $cl->channel_list ($channel)
 
 Without C<$channel> parameter:
 This returns a hash reference. The keys are the currently joined channels in lower case.
@@ -441,7 +445,7 @@ sub channel_list {
    }
 }
 
-=item B<nick_modes ($channel, $nick)>
+=item $cl->nick_modes ($channel, $nick)
 
 This returns the mode map of the C<$nick> on C<$channel>.
 Returns undef if the channel isn't joined or the user is not on it.
@@ -457,7 +461,7 @@ sub nick_modes {
     return $c->{$self->lower_case ($nick)};
 }
 
-=item B<send_msg (...)>
+=item $cl->send_msg (...)
 
 See also L<AnyEvent::IRC::Connection>.
 
@@ -469,7 +473,7 @@ sub send_msg {
    $self->SUPER::send_msg (@a);
 }
 
-=item B<send_srv ($command, @params)>
+=item $cl->send_srv ($command, @params)
 
 This function sends an IRC message that is constructed by C<mk_msg (undef,
 $command, @params)> (see L<AnyEvent::IRC::Util>). If the C<registered> event
@@ -509,7 +513,7 @@ sub send_srv {
    }
 }
 
-=item B<clear_srv_queue>
+=item $cl->clear_srv_queue ()
 
 Clears the server send queue.
 
@@ -521,7 +525,7 @@ sub clear_srv_queue {
 }
 
 
-=item B<send_chan ($channel, $command, @params)>
+=item $cl->send_chan ($channel, $command, @params)
 
 This function sends a message (constructed by C<mk_msg (undef, $command,
 @params)> to the server, like C<send_srv> only that it will queue
@@ -550,7 +554,7 @@ sub send_chan {
    }
 }
 
-=item B<clear_chan_queue ($channel)>
+=item $cl->clear_chan_queue ($channel)
 
 Clears the channel queue of the channel C<$channel>.
 
@@ -561,7 +565,7 @@ sub clear_chan_queue {
    $self->{chan_queue}->{$self->lower_case ($chan)} = [];
 }
 
-=item B<enable_ping ($interval, $cb)>
+=item $cl->enable_ping ($interval, $cb)
 
 This method enables a periodical ping to the server with an interval of
 C<$interval> seconds. If no PONG was received from the server until the next
@@ -598,7 +602,7 @@ sub enable_ping {
       });
 }
 
-=item B<lower_case ($str)>
+=item $cl->lower_case ($str)
 
 Converts the given string to lowercase according to CASEMAPPING setting given by
 the IRC server. If none was sent, the default - rfc1459 - will be used.
@@ -612,7 +616,7 @@ sub lower_case {
    return $_;
 }
 
-=item B<eq_str ($str1, $str2)>
+=item $cl->eq_str ($str1, $str2)
 
 This function compares two strings, whether they are describing the same
 IRC entity. They are lower cased by the networks case rules and compared then.
@@ -624,7 +628,9 @@ sub eq_str {
    $self->lower_case ($a) eq $self->lower_case ($b)
 }
 
-=item B<isupport ([$key])>
+=item $cl->isupport ()
+
+=item $cl->isupport ($key)
 
 Provides access to the ISUPPORT variables sent by the IRC server. If $key is
 given this method will return its value only, otherwise a hashref with all values
@@ -641,7 +647,7 @@ sub isupport {
    }
 }
 
-=item B<split_nick_mode ($prefixed_nick)>
+=item $cl->split_nick_mode ($prefixed_nick)
 
 This method splits the C<$prefix_nick> (eg. '+elmex') up into the
 mode of the user and the nickname.
@@ -682,7 +688,7 @@ sub split_nick_mode {
    }
 }
 
-=item B<map_prefix_to_mode ($prefix)>
+=item $cl->map_prefix_to_mode ($prefix)
 
 Maps the nick prefix (eg. '@') to the corresponding mode (eg. 'o').
 Returns undef if no such prefix exists (on the connected server).
@@ -694,7 +700,7 @@ sub map_prefix_to_mode {
    $self->{prefix2mode}->{$prefix}
 }
 
-=item B<map_mode_to_prefix ($mode)>
+=item $cl->map_mode_to_prefix ($mode)
 
 Maps the nick mode (eg. 'o') to the corresponding prefix (eg. '@').
 Returns undef if no such mode exists (on the connected server).
@@ -710,7 +716,7 @@ sub map_mode_to_prefix {
    return undef;
 }
 
-=item B<available_nick_modes ()>
+=item $cl->available_nick_modes ()
 
 Returns a list of possible modes on this IRC server. (eg. 'o' for op).
 
@@ -721,7 +727,7 @@ sub available_nick_modes {
    map { $self->map_prefix_to_mode ($_) } split //, $self->{prefix_chars}
 }
 
-=item B<is_channel_name ($string)>
+=item $cl->is_channel_name ($string)
 
 This return true if C<$string> is a channel name. It analyzes the prefix
 of the string (eg. if it is '#') and returns true if it finds a channel prefix.
@@ -736,7 +742,7 @@ sub is_channel_name {
    $string =~ /^([\Q$cchrs\E]+)(.+)$/;
 }
 
-=item B<nick_ident ($nick)>
+=item $cl->nick_ident ($nick)
 
 This method returns the whole ident of the C<$nick> if the informations is available.
 If the nick's ident hasn't been seen yet, undef is returned.
@@ -748,8 +754,8 @@ sub nick_ident {
    $self->{idents}->{$self->lower_case ($nick)}
 }
 
-=item B<ctcp_auto_reply ($ctcp_command, @msg)>
-=item B<ctcp_auto_reply ($ctcp_command, $coderef)>
+=item $cl->ctcp_auto_reply ($ctcp_command, @msg)
+=item $cl->ctcp_auto_reply ($ctcp_command, $coderef)
 
 This method installs an auto-reply for the reception of the C<$ctcp_command>
 via PRIVMSG, C<@msg> will be used as argument to the C<encode_ctcp> function of
