@@ -52,7 +52,7 @@ C<encode_ctcp> and C<decode_ctcp> provided by L<AnyEvent::IRC::Util>.
 
 =over 4
 
-=item B<new>
+=item $con = AnyEvent::IRC::Connection->new ()
 
 This constructor does take no arguments.
 
@@ -69,7 +69,7 @@ sub new {
   return $self;
 }
 
-=item B<connect ($host, $port)>
+=item $con->connect ($host, $port)
 
 Tries to open a socket to the host C<$host> and the port C<$port>.
 If an error occurred it will die (use eval to catch the exception).
@@ -119,7 +119,7 @@ sub connect {
    };
 }
 
-=item B<disconnect ($reason)>
+=item $con->disconnect ($reason)
 
 Unregisters the connection in the main AnyEvent::IRC object, closes
 the sockets and send a 'disconnect' event with C<$reason> as argument.
@@ -133,7 +133,7 @@ sub disconnect {
    $self->event (disconnect => $reason);
 }
 
-=item B<is_connected>
+=item $con->is_connected
 
 Returns true when this connection is connected.
 Otherwise false.
@@ -145,7 +145,7 @@ sub is_connected {
    $self->{socket} && $self->{connected}
 }
 
-=item B<heap ()>
+=item $con->heap ()
 
 Returns a hash reference that is local to this connection object
 that lets you store any information you want.
@@ -157,7 +157,7 @@ sub heap {
    return $self->{heap};
 }
 
-=item B<send_raw ($ircline)>
+=item $con->send_raw ($ircline)
 
 This method sends C<$ircline> straight to the server without any
 further processing done.
@@ -171,7 +171,7 @@ sub send_raw {
    $self->{socket}->push_write ($ircline . "\015\012");
 }
 
-=item B<send_msg ($command, @params)>
+=item $con->send_msg ($command, @params)
 
 This function sends a message to the server. C<@ircmsg> is the argument list
 for C<AnyEvent::IRC::Util::mk_msg (undef, $command, @params)>.
@@ -205,13 +205,13 @@ registering event callbacks.
 
 =over 4
 
-=item B<connect $error>
+=item connect => $error
 
 This event is generated when the socket was successfully connected
 or an error occurred while connecting. The error is given as second
 argument (C<$error>) to the callback then.
 
-=item B<disconnect $reason>
+=item disconnect => $reason
 
 This event will be generated if the connection is somehow terminated.
 It will also be emitted when C<disconnect> is called.
@@ -220,19 +220,24 @@ a clue about why the connection terminated.
 
 If you want to reestablish a connection, call C<connect> again.
 
-=item B<sent @ircmsg>
+=item sent => @ircmsg
 
 Emitted when a message (C<@ircmsg>) was sent to the server.
 C<@ircmsg> are the arguments to C<AnyEvent::IRC::Util::mk_msg>.
 
-=item B<'*' $msg>
+=item irc_* => $msg
 
-=item B<read $msg>
+=item irc_<lowercase command> => $msg
+
+=item read => $msg
 
 Emitted when a message (C<$msg>) was read from the server.
 C<$msg> is the hash reference returned by C<AnyEvent::IRC::Util::parse_irc_msg>;
 
-=item B<buffer_empty>
+Note: '<lowercase command>' stands for the command of the message in
+(ASCII) lower case.
+
+=item buffer_empty
 
 This event is emitted when the write buffer of the underlying connection
 is empty and all data has been given to the kernel. See also C<samples/notify>
