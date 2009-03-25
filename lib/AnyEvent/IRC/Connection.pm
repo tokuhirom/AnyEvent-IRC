@@ -43,7 +43,8 @@ AnyEvent::IRC::Connection - An IRC connection abstraction
 =head1 DESCRIPTION
 
 The connection class. Here the actual interesting stuff can be done,
-such as sending and receiving IRC messages.
+such as sending and receiving IRC messages. And it also handles
+TCP connecting and even enabling of TLS.
 
 Please note that CTCP support is available through the functions
 C<encode_ctcp> and C<decode_ctcp> provided by L<AnyEvent::IRC::Util>.
@@ -54,7 +55,7 @@ C<encode_ctcp> and C<decode_ctcp> provided by L<AnyEvent::IRC::Util>.
 
 =item $con = AnyEvent::IRC::Connection->new ()
 
-This constructor does take no arguments.
+This constructor doesn't take any arguments.
 
 =cut
 
@@ -73,6 +74,9 @@ sub new {
 
 Tries to open a socket to the host C<$host> and the port C<$port>.
 If an error occurred it will die (use eval to catch the exception).
+
+If you want to connect via TLS/SSL you have to call the C<enable_ssl>
+method before to enable it.
 
 =cut
 
@@ -98,6 +102,7 @@ sub connect {
       $self->{socket} =
          AnyEvent::Handle->new (
             fh => $fh,
+            ($self->{enable_ssl} ? (tls => 'connect') : ()),
             on_eof => sub {
                $self->disconnect ("EOF from server $host:$port");
             },
@@ -117,6 +122,17 @@ sub connect {
 
       $self->event ('connect');
    };
+}
+
+=item $con->enable_ssl ()
+
+This method will enable SSL for new connections that are initiated by C<connect>.
+
+=cut
+
+sub enable_ssl {
+   my ($self) = @_;
+   $self->{enable_ssl} = 1;
 }
 
 =item $con->disconnect ($reason)
