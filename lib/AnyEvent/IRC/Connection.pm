@@ -67,6 +67,13 @@ sub new {
 
   bless $self, $class;
 
+  $self->reg_cb (
+     ext_after_send => sub {
+        my ($self, $mkmsg_args) = @_;
+        $self->send_raw (mk_msg (@$mkmsg_args));
+     }
+  );
+
   return $self;
 }
 
@@ -197,8 +204,8 @@ for C<AnyEvent::IRC::Util::mk_msg (undef, $command, @params)>.
 sub send_msg {
    my ($self, @msg) = @_;
 
+   $self->event (send => [undef, @msg]);
    $self->event (sent => undef, @msg);
-   $self->send_raw (mk_msg (undef, @msg));
 }
 
 sub _feed_irc_data {
@@ -235,6 +242,26 @@ The second argument to the callback is C<$reason>, a string that contains
 a clue about why the connection terminated.
 
 If you want to reestablish a connection, call C<connect> again.
+
+=item send => $ircmsg
+
+Emitted when a message is about to be sent. C<$ircmsg> is an array reference
+to the arguments of C<mk_msg> (see L<AnyEvent::IRC::Util>). You
+may modify the array reference to change the message or even intercept it
+completely by calling C<stop_event> (see L<Object::Event> API):
+
+   $con->reg_cb (
+      send => sub {
+         my ($con, $ircmsg) = @_;
+
+         if ($ircmsg->[1] eq 'NOTICE') {
+            $con->stop_event; # prevent any notices from being sent.
+
+         } elsif ($ircmsg->[1] eq 'PRIVMSG') {
+            $ircmsg->[-1] =~ s/sex/XXX/i; # censor any outgoing private messages.
+         }
+      }
+   );
 
 =item sent => @ircmsg
 
