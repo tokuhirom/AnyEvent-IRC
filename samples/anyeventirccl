@@ -45,7 +45,7 @@ $pc->reg_cb (
    registered => sub {
       my ($self) = @_;
       print "registered!\n";
-      $pc->enable_ping (2);
+      $pc->enable_ping (60);
    },
    disconnect => sub {
       print "DISCOPNNECT ($_[1])!!!\n";

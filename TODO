@@ -3,3 +3,4 @@
    http://www.leeh.co.uk/draft-mitchell-irc-capabilities-02.html
 - add TOPIC support
 - add support for KILL!
+- add breaking of long lines (Zaba? patch? :)
