@@ -48,7 +48,7 @@ $pc->reg_cb (
       $pc->enable_ping (60);
    },
    disconnect => sub {
-      print "DISCOPNNECT ($_[1])!!!\n";
+      print "disconnected: $_[1]!\n";
    }
 );
 
