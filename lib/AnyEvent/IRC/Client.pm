@@ -855,7 +855,16 @@ sub _setup_internal_dcc_handlers {
       my ($self, $src, $target, $msg, $type) = @_;
 
       if ($self->is_my_nick ($target)) {
-         my ($dcc_type, $dcc_arg, $addr, $port) = split /\x20/, $msg;
+         my ($dcc_type, $arg, $addr, $port) = split /\x20/, $msg;
+
+         $dcc_type = lc $dcc_type;
+
+         if ($dcc_type eq 'send') {
+            if ($msg =~ /SEND (.*?) (\d+) (\d+)/) {
+               ($arg, $addr, $port) = ($1, $2, $3);
+               $arg =~ s/^\"(.*)\"$/\1/;
+            }
+         }
 
          $addr = format_address (pack "N", $addr);
 
@@ -866,10 +875,10 @@ sub _setup_internal_dcc_handlers {
             dest => $self->lower_case ($src),
             ip   => $addr,
             port => $port,
-            arg  => $dcc_arg,
+            arg  => $arg,
          };
 
-         $self->event (dcc_request => $id, $src, lc ($dcc_type), $dcc_arg, $addr, $port);
+         $self->event (dcc_request => $id, $src, $dcc_type, $arg, $addr, $port);
       }
    });
 
