@@ -1,3 +1,4 @@
+- add DCC port-range setting functionality.
 - add CAP support, and STARTTLS
    http://wiki.inspircd.org/STARTTLS_Documentation
    http://www.leeh.co.uk/draft-mitchell-irc-capabilities-02.html
