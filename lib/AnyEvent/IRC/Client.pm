@@ -189,10 +189,12 @@ C<$src> is the source nick the message came from.
 C<$target> is the target nickname (yours) or the channel the ctcp was sent
 on.
 
-=item dcc_ready => $dest, $type, $local_ip, $local_port
+=item dcc_ready => $id, $dest, $type, $local_ip, $local_port
 
 Whenever a locally initiated DCC request is made this event is emitted
 after the listening socket has been setup.
+
+C<$id> is the DCC connection ID.
 
 C<$dest> and C<$type> are the destination and type of the DCC request.
 
@@ -201,30 +203,48 @@ the IP the socket is bound to.
 
 C<$local_port> is the TCP port is the socket is listening on.
 
-=item dcc_open => $dest, $type, $hdl
+=item dcc_request => $id, $src, $type, $arg, $addr, $port
+
+Whenever we receive a DCC offer from someone else this event is emitted.
+C<$id> is the DCC connection ID, C<$src> is his nickname, C<$type> is the DCC
+type in lower cases (eg. 'chat').  C<$arg> is the DCC type argument. C<$addr>
+is the IP address we can reach him at in ASCII encoded human readable form (eg.
+something like "127.0.0.1").  And C<$port> is the TCP port we have to connect
+to.
+
+To answer to his request you can just call C<dcc_accept> with the C<$id>.
+
+=item dcc_accepted => $id, $type, $hdl
 
 When the locally listening DCC socket has received a connection this event is emitted.
 
-C<$dest> and C<$type> are the destination and type of the DCC request.
+C<$id> and C<$type> are the DCC connection ID and type of the DCC request.
 
 C<$hdl> is a pre-configured L<AnyEvent::Handle> object, which you only
 need to care about in case you want to implement your own DCC protocol.
 (This event has the on_error and on_eof events pre-configured to cleanup
 the data structures in this connection).
 
-=item dcc_close => $dest, $type, $reason
+=item dcc_connected => $id, $type, $hdl
 
-This event is emitted whenever a DCC offer or connection is terminated.
+Whenever we accepted a DCC offer and connected by using C<dcc_accept> this
+event is emitted. C<$id> is the DCC connection ID.  C<$type> is the dcc type in
+lower case. C<$hdl> is the L<AnyEvent::Handle> object of the connection (see
+also C<dcc_accepted> above).
 
-C<$dest> and C<$type> are the destination and type of the DCC request.
+=item dcc_close => $id, $type, $reason
+
+This event is emitted whenever a DCC connection is terminated.
+
+C<$id> and C<$type> are the DCC connection ID and type of the DCC request.
 
 C<$reason> is a human readable string indicating the reason for the end of
 the DCC request.
 
-=item dcc_chat_msg => $dest, $msg
+=item dcc_chat_msg => $id, $msg
 
-This event is emitted for a DCC CHAT message. C<$dest> is the nickname we
-negotiated the DCC connection with. And C<$msg> is the message he sent us.
+This event is emitted for a DCC CHAT message. C<$id> is the DCC connection
+ID we received the message on. And C<$msg> is the message he sent us.
 
 =item quit => $nick, $msg
 
@@ -831,8 +851,30 @@ sub ctcp_auto_reply {
 sub _setup_internal_dcc_handlers {
    my ($self) = @_;
 
+   $self->reg_cb (ctcp_dcc => sub {
+      my ($self, $src, $target, $msg, $type) = @_;
+
+      if ($self->is_my_nick ($target)) {
+         my ($dcc_type, $dcc_arg, $addr, $port) = split /\x20/, $msg;
+
+         $addr = format_address (pack "N", $addr);
+
+         my $id = ++$self->{dcc_id};
+
+         $self->{dcc}->{$id} = {
+            type => lc ($dcc_type),
+            dest => $self->lower_case ($src),
+            ip   => $addr,
+            port => $port,
+            arg  => $dcc_arg,
+         };
+
+         $self->event (dcc_request => $id, $src, lc ($dcc_type), $dcc_arg, $addr, $port);
+      }
+   });
+
    $self->reg_cb (dcc_ready => sub {
-      my ($self, $dest, $type, $local_ip, $local_port) = @_;
+      my ($self, $id, $dest, $type, $local_ip, $local_port) = @_;
 
       $local_ip = unpack ("N", parse_address ($local_ip));
 
@@ -848,21 +890,34 @@ sub _setup_internal_dcc_handlers {
       }
    });
 
-   $self->reg_cb (dcc_open => sub {
-      my ($self, $dest, $type, $hdl) = @_;
+   $self->reg_cb (dcc_accepted => sub {
+      my ($self, $id, $type, $hdl) = @_;
 
       if ($type eq 'chat') {
          $hdl->on_read (sub {
             $hdl->push_read (line => sub {
                my ($hdl, $line) = @_;
-               $self->event (dcc_chat_msg => $dest, $line);
+               $self->event (dcc_chat_msg => $id, $line);
+            });
+         });
+      }
+   });
+
+   $self->reg_cb (dcc_connected => sub {
+      my ($self, $id, $type, $hdl) = @_;
+
+      if ($type eq 'chat') {
+         $hdl->on_read (sub {
+            $hdl->push_read (line => sub {
+               my ($hdl, $line) = @_;
+               $self->event (dcc_chat_msg => $id, $line);
             });
          });
       }
    });
 }
 
-=item $cl->start_dcc ($dest, $type, $timeout, $local_ip, $local_port)
+=item $cl->dcc_initiate ($dest, $type, $timeout, $local_ip, $local_port)
 
 This function will initiate a DCC TCP connection to C<$dest> of type C<$type>.
 It will setup a listening TCP socket on C<$local_port>, or a random port if
@@ -876,30 +931,29 @@ C<$timeout> is the time in seconds after which the listening socket will be
 closed if the receiver didn't connect yet. The default is 300 (5 minutes).
 
 When the local listening socket has been setup the C<dcc_ready> event is
-emitted.  When the receiver connects to the socket the C<dcc_open> event is
+emitted.  When the receiver connects to the socket the C<dcc_accepted> event is
 emitted.  And whenever a dcc connection is closed the C<dcc_close> event is
 emitted.
 
-For canceling the DCC offer or closing the connection see C<end_dcc> below.
+For canceling the DCC offer or closing the connection see C<dcc_disconnect> below.
+
+The return value of this function will be the ID of the initiated DCC connection,
+which can be used for functions such as C<dcc_disconnect>, C<send_dcc_chat> or
+C<dcc_handle>.
 
 =cut
 
-sub start_dcc {
+sub dcc_initiate {
    my ($self, $dest, $type, $timeout, $local_ip, $local_port) = @_;
 
    $dest = $self->lower_case ($dest);
    $type = lc $type;
 
-   my $dcc = $self->{dcc}->{$dest}->{$type};
-   if ($dcc) {
-      $self->end_dcc ($dest, $type, "REPLACED");
-   }
-
-   $dcc = $self->{dcc}->{$dest}->{$type} = {};
-   $dcc->{type} = $type;
+   my $id = ++$self->{dcc_id};
+   my $dcc = $self->{dcc}->{$id} = { id => $id, type => $type, dest => $dest };
 
    $dcc->{timeout} = AnyEvent->timer (after => $timeout || 5 * 60, cb => sub {
-      $self->end_dcc ($dest, $type, "TIMEOUT");
+      $self->dcc_disconnect ($id, "TIMEOUT");
    });
 
    $dcc->{listener} = tcp_server undef, $local_port, sub {
@@ -911,17 +965,15 @@ sub start_dcc {
          fh => $fh,
          on_eof => sub {
             delete $dcc->{handle};
-            $self->end_dcc ($dest, $type, "EOF");
+            $self->dcc_disconnect ($id, "EOF");
          },
          on_error => sub {
             delete $dcc->{handle};
-            $self->end_dcc ($dest, $type, "ERROR: $!");
+            $self->dcc_disconnect ($id, "ERROR: $!");
          }
       );
 
-      if ($dcc->{type} eq 'chat') {
-         $self->event (dcc_open => $dest, $type, $dcc->{handle});
-      }
+      $self->event (dcc_accepted => $id, $type, $dcc->{handle});
 
    }, sub {
       my ($fh, $host, $port) = @_;
@@ -931,52 +983,93 @@ sub start_dcc {
       $dcc->{local_ip}   = $local_ip;
       $dcc->{local_port} = $local_port;
 
-      $self->event (dcc_ready => $dest, $type, $local_ip, $local_port);
+      $self->event (dcc_ready => $id, $dest, $type, $local_ip, $local_port);
    };
+
+   $id
 }
 
 
-=item $cl->end_dcc ($dest, $type, $reason)
+=item $cl->dcc_disconnect ($id, $reason)
 
 In case you want to withdraw a DCC offer sent by C<start_dcc> or close
 a DCC connection you call this function.
 
-C<$dest> is the destination of the DCC offer/connection, and C<$type> is it's
-type. C<$reason> should be a human readable reason why you ended the dcc offer,
-but it's only used for local logging purposes (see C<dcc_close> event).
+C<$id> is the DCC connection ID.  C<$reason> should be a human readable reason
+why you ended the dcc offer, but it's only used for local logging purposes (see
+C<dcc_close> event).
 
 =cut
 
+sub dcc_disconnect {
+   my ($self, $id, $reason) = @_;
 
-sub end_dcc {
-   my ($self, $dest, $type, $reason) = @_;
-
-   $dest = $self->lower_case ($dest);
-   $type = lc $type;
-
-   if (my $dcc = delete $self->{dcc}->{$dest}->{$type}) {
-      $self->event (dcc_close => $dest, $type, $reason);
+   if (my $dcc = delete $self->{dcc}->{$id}) {
+      $self->event (dcc_close => $id, $dcc->{type}, $reason);
    }
 }
 
-sub get_dcc_handle {
-   my ($self, $dest, $type) = @_;
+=item $cl->dcc_accept ($id, $timeout)
 
-   $dest = $self->lower_case ($dest);
-   $type = lc $type;
+This will accept an incoming DCC request as received by the C<dcc_request>
+event. The C<dcc_connected> event will be emitted when we successfully
+connected. And the C<dcc_close> event when the connection was disconnected.
 
-   if (my $dcc = $self->{dcc}->{$dest}->{$type}) {
+C<$timeout> is the connection try timeout in seconds. The default is 300 (5 minutes).
+
+=cut
+
+sub dcc_accept {
+   my ($self, $id, $timeout) = @_;
+
+   my $dcc = $self->{dcc}->{$id}
+      or return;
+
+   $dcc->{timeout} = AnyEvent->timer (after => $timeout || 5 * 60, cb => sub {
+      $self->dcc_disconnect ($id, "CONNECT TIMEOUT");
+   });
+
+   $dcc->{connect} = tcp_connect $dcc->{ip}, $dcc->{port}, sub {
+      my ($fh) = @_;
+      unless ($fh) {
+         $self->dcc_disconnect ($id, "CONNECT ERROR: $!");
+         return;
+      }
+
+      delete $dcc->{timeout};
+      delete $dcc->{connect};
+
+      $dcc->{handle} = AnyEvent::Handle->new (
+         fh => $fh,
+         on_eof => sub {
+            delete $dcc->{handle};
+            $self->dcc_disconnect ($id, "EOF");
+         },
+         on_error => sub {
+            delete $dcc->{handle};
+            $self->dcc_disconnect ($id, "ERROR: $!");
+         }
+      );
+
+      $self->event (dcc_connected => $id, $dcc->{type}, $dcc->{handle});
+   };
+
+   $id
+}
+
+sub dcc_handle {
+   my ($self, $id) = @_;
+
+   if (my $dcc = $self->{dcc}->{$id}) {
       return $dcc->{handle}
    }
    return;
 }
 
 sub send_dcc_chat {
-   my ($self, $dest, $msg) = @_;
+   my ($self, $id, $msg) = @_;
 
-   $dest = $self->lower_case ($dest);
-
-   if (my $dcc = $self->{dcc}->{$dest}->{chat}) {
+   if (my $dcc = $self->{dcc}->{$id}) {
       if ($dcc->{handle}) {
          $dcc->{handle}->push_write ("$msg\015\012");
       }
