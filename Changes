@@ -3,6 +3,7 @@ Revision history for AnyEvent::IRC
         - added enable_ssl to AnyEvent::IRC::Connection to enable
           TLS handshake after TCP connect.
         - added send event for hooking into sending a message.
+        - Implemented initiating DCC connections in AnyEvent::IRC::Client.
 
 0.7     Wed Jan 21 20:46:39 CET 2009
         - removed autocork hack, as AnyEvent ignores SIGPIPE now.
