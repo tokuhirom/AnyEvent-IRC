@@ -37,7 +37,7 @@ sub test_init {
    my ($cnt, $nd_cl) = @_;
 
    $NICK = 'aicbot';
-   $NICK2 = 'aicbot2';
+   $NICK2 = 'AiCboT2';
 
    if ($ENV{ANYEVENT_IRC_MAINTAINER_TEST_SERVER}) {
       if ($ENV{ANYEVENT_IRC_MAINTAINER_TEST_SERVER} =~ /^([^:]+)(?::(\d+))?$/) {

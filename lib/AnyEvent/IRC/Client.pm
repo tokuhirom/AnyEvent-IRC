@@ -485,14 +485,13 @@ sub registered { $_[0]->{registered} }
 
 =item $cl->channel_list ($channel)
 
-Without C<$channel> parameter:
-This returns a hash reference. The keys are the currently joined channels in lower case.
-The values are hash references which contain the joined nicks as key and the nick modes
-as values (as returned from C<nick_modes ()>).
+Without C<$channel> parameter: This returns a hash reference. The keys are the
+currently joined channels in lower case.  The values are hash references which
+contain the joined nicks as key (NOT in lower case!) and the nick modes as
+values (as returned from C<nick_modes ()>).
 
 If the C<$channel> parameter is given it returns the hash reference of the channel
 occupants or undef if the channel does not exist.
-
 
 =cut
 
@@ -519,7 +518,9 @@ sub nick_modes {
 
     my $c = $self->channel_list ($channel)
        or return undef;
-    return $c->{$self->lower_case ($nick)};
+
+    my (%lcc) = map { $self->lower_case ($_) => $c->{$_} } keys %$c;
+    return $lcc{$self->lower_case ($nick)};
 }
 
 =item $cl->send_msg (...)

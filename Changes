@@ -5,6 +5,7 @@ Revision history for AnyEvent::IRC
         - added send event for hooking into sending a message.
         - Implemented DCC in AnyEvent::IRC::Client.
         - Implemented the DCC CHAT protocol.
+        - fixed bug in AnyEvent::IRC::Client::nick_modes.
 
 0.7     Wed Jan 21 20:46:39 CET 2009
         - removed autocork hack, as AnyEvent ignores SIGPIPE now.
