@@ -905,6 +905,8 @@ sub _setup_internal_dcc_handlers {
 
       if ($type eq 'chat') {
          $hdl->on_read (sub {
+            my ($hdl) = @_;
+
             $hdl->push_read (line => sub {
                my ($hdl, $line) = @_;
                $self->event (dcc_chat_msg => $id, $line);
@@ -918,6 +920,8 @@ sub _setup_internal_dcc_handlers {
 
       if ($type eq 'chat') {
          $hdl->on_read (sub {
+            my ($hdl) = @_;
+
             $hdl->push_read (line => sub {
                my ($hdl, $line) = @_;
                $self->event (dcc_chat_msg => $id, $line);
@@ -974,11 +978,9 @@ sub dcc_initiate {
       $dcc->{handle} = AnyEvent::Handle->new (
          fh => $fh,
          on_eof => sub {
-            delete $dcc->{handle};
             $self->dcc_disconnect ($id, "EOF");
          },
          on_error => sub {
-            delete $dcc->{handle};
             $self->dcc_disconnect ($id, "ERROR: $!");
          }
       );
@@ -1015,6 +1017,7 @@ sub dcc_disconnect {
    my ($self, $id, $reason) = @_;
 
    if (my $dcc = delete $self->{dcc}->{$id}) {
+      delete $dcc->{handle};
       $self->event (dcc_close => $id, $dcc->{type}, $reason);
    }
 }
@@ -1041,13 +1044,13 @@ sub dcc_accept {
 
    $dcc->{connect} = tcp_connect $dcc->{ip}, $dcc->{port}, sub {
       my ($fh) = @_;
+      delete $dcc->{timeout};
+      delete $dcc->{connect};
+
       unless ($fh) {
          $self->dcc_disconnect ($id, "CONNECT ERROR: $!");
          return;
       }
-
-      delete $dcc->{timeout};
-      delete $dcc->{connect};
 
       $dcc->{handle} = AnyEvent::Handle->new (
          fh => $fh,
