@@ -12,5 +12,6 @@ samples/anyeventirccl
 samples/debug_console
 samples/version_dump
 samples/anyeventirc
+samples/dcc
 t/00_load.t
 t/01_util.t
