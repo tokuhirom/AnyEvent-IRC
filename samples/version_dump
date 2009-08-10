@@ -1,5 +1,10 @@
 #!/usr/bin/env perl
-use IO::Handle;
+# Dumps the version of the irc server and exits.
+#
+# Command line:
+#   $ ./version_dump <host> <port>
+#
+use common::sense;
 use AnyEvent;
 use AnyEvent::IRC::Client;
 use AnyEvent::IRC::Util qw/mk_msg parse_irc_msg encode_ctcp/;

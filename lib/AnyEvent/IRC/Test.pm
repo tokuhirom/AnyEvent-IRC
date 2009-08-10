@@ -1,6 +1,5 @@
 package AnyEvent::IRC::Test;
-use strict;
-no warnings;
+use common::sense;
 require Exporter;
 our @ISA = qw/Exporter/;
 our @EXPORT = qw/test_init test_plan test_start $CL $CL2 $NICK $NICK2 state state_check state_done/;

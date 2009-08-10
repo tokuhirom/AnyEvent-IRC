@@ -1,4 +1,5 @@
 #!/usr/bin/env perl
+use common::sense;
 use AnyEvent;
 use AnyEvent::IRC::Client;
 
@@ -12,7 +13,7 @@ $con->reg_cb (
 
       if (defined $err) {
          warn "Couldn't connect: $err\n";
-         $c->broadcast;
+         $c->send;
       } else {
          print "Connected!\n";
       }
@@ -34,10 +35,10 @@ $con->reg_cb (
    },
    disconnect => sub {
       print "I'm out ($_[1])!\n";
-      $c->broadcast
+      $c->send
    },
 );
 
 $con->connect ("localhost", 6667);
 
-$c->wait;
+$c->recv;

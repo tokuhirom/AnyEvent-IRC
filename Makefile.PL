@@ -13,6 +13,7 @@ WriteMakefile(
         'Test::More'    => 0,
         'AnyEvent'      => 0,
         'Object::Event' => '0.6',
+        'common::sense' => 0,
     },
     dist                => {
        COMPRESS => 'gzip -9f',

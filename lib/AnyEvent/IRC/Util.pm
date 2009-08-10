@@ -1,6 +1,5 @@
 package AnyEvent::IRC::Util;
-use strict;
-no warnings;
+use common::sense;
 use Exporter;
 our @ISA = qw/Exporter/;
 our @EXPORT_OK =

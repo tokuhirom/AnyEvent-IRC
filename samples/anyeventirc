@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-use strict;
+use common::sense;
 use AnyEvent::Impl::Perl;
 use AnyEvent;
 use AnyEvent::IRC::Connection;
@@ -17,8 +17,13 @@ $con->reg_cb (irc_001 => sub {
 });
 
 # display all irc messages for debugging
-$con->reg_cb ('irc_*' => sub { warn "DEBUG: " . join ('|', %{$_[1]}) . "\n"; });
-$con->reg_cb ('sent'  => sub { shift; warn "DEBUG SENT: " . join ('|', @_) . "\n"; });
+$con->reg_cb ('irc_*' => sub {
+   my @p = @{delete $_[1]->{params} || []};
+   warn "DEBUG: " . join ('|', %{$_[1]}, @p) . "\n";
+});
+$con->reg_cb ('sent'  => sub {
+   shift; warn "DEBUG SENT: " . join ('|', @_) . "\n";
+});
 
 # we register now a callback on our self defined event
 $con->reg_cb (welcome => sub {
@@ -26,16 +31,18 @@ $con->reg_cb (welcome => sub {
    $con->send_msg ("PRIVMSG", "elmex", "Hi!!!");
 });
 
+# Disconnect after 10 seconds:
 my $t;
 $t = AnyEvent->timer (after => 10, cb => sub {
    $con->disconnect ("Timeout exceeded");
    undef $t;
 });
 
-# lets 
+# lets register connect and disconnect handlers.
 $con->reg_cb (
    connect => sub {
       my ($con, $err) = @_;
+
       if (defined $err) {
          warn "Connect ERROR! => $err\n";
          $c->broadcast;

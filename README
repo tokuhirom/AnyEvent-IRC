@@ -2,7 +2,7 @@ NAME
     AnyEvent::IRC - An event system independend IRC protocol module
 
 VERSION
-    Version 0.8
+    Version 0.81
 
 SYNOPSIS
     Using the simplistic AnyEvent::IRC::Connection:

@@ -1,5 +1,7 @@
 #!/usr/bin/env perl
-use strict;
+# Just a small sample script on how DCC is used.
+#
+use common::sense;
 use AnyEvent;
 use AnyEvent::IRC::Client;
 

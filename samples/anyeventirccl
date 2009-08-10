@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-use strict;
+use common::sense;
 use AnyEvent::IRC::Client;
 
 my $c = AnyEvent->condvar;

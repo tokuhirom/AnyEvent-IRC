@@ -1,6 +1,5 @@
 package AnyEvent::IRC::Connection;
-use strict;
-no warnings;
+use common::sense;
 use AnyEvent;
 use POSIX;
 use AnyEvent::Socket;

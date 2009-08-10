@@ -1,5 +1,5 @@
 #!perl
-use strict;
+use common::sense;
 use Test::More;
 use AnyEvent::IRC::Test;
 use AnyEvent::IRC::Util qw/prefix_nick/;

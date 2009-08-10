@@ -1,9 +1,6 @@
 package AnyEvent::IRC;
-use strict;
+use common::sense;
 use AnyEvent;
-use IO::Socket::INET;
-
-our $ConnectionClass = 'AnyEvent::IRC::Connection';
 
 =head1 NAME
 
@@ -11,11 +8,11 @@ AnyEvent::IRC - An event system independend IRC protocol module
 
 =head1 VERSION
 
-Version 0.8
+Version 0.81
 
 =cut
 
-our $VERSION = '0.8';
+our $VERSION = '0.81';
 
 =head1 SYNOPSIS
 
@@ -127,6 +124,7 @@ L<AnyEvent::IRC::Client>
 L<AnyEvent>
 
 RFC 1459 - Internet Relay Chat: Client Protocol
+
 RFC 2812 - Internet Relay Chat: Client Protocol
 
 =head1 BUGS

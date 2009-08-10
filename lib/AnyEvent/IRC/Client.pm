@@ -1,6 +1,5 @@
 package AnyEvent::IRC::Client;
-use strict;
-no warnings;
+use common::sense;
 
 use AnyEvent::Socket;
 use AnyEvent::Handle;

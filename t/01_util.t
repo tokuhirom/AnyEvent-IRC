@@ -1,5 +1,5 @@
 #!perl
-use strict;
+use common::sense;
 use Test::More;
 use AnyEvent::IRC::Util
    qw/parse_irc_msg mk_msg split_prefix rfc_code_to_name
