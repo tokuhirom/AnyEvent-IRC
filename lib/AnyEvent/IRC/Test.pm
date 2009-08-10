@@ -2,7 +2,7 @@ package AnyEvent::IRC::Test;
 use common::sense;
 require Exporter;
 our @ISA = qw/Exporter/;
-our @EXPORT = qw/test_init test_plan test_start $CL $CL2 $NICK $NICK2 state state_check state_done/;
+our @EXPORT = qw/test_init test_plan test_start $CL $CL2 $NICK $NICK2 istate istate_check istate_done/;
 
 use Test::More;
 use AnyEvent;
@@ -72,7 +72,7 @@ sub test_init {
       registered => sub {
          my ($con) = @_;
          $NICK = $con->nick;
-         state_done ('bot1_registered');
+         istate_done ('bot1_registered');
       },
       disconnect => sub {
          my ($con, $reason) = @_;
@@ -115,7 +115,7 @@ sub test_init {
          registered => sub {
             my ($con) = @_;
             $NICK2 = $con->nick;
-            state_done ('bot2_registered');
+            istate_done ('bot2_registered');
          },
          disconnect => sub {
             my ($con, $reason) = @_;
@@ -168,24 +168,24 @@ sub test_start {
    ok (!$tout, "script didn't timeout");
 }
 
-sub state {
+sub istate {
    my ($state, $args, $cond, $cb, @prec) = @_;
    $STATE{$state} = { name => $state, args => $args, cond => $cond, cb => $cb, done => 0, prec => \@prec };
 
-   state_check ();
+   istate_check ();
 }
 
-sub state_done {
+sub istate_done {
    my ($state) = @_;
    $STATE{$state} ||= {
       name => $state, args => undef, cond => undef, cb => undef, done => 0
    };
    $STATE{$state}->{done} = 1;
 
-   state_check ();
+   istate_check ();
 }
 
-sub state_check {
+sub istate_check {
    my ($state, $cb) = @_;
    if (defined $state && $STATE{$state} && !$STATE{$state}->{done}) {
       $cb->($STATE{$state}->{args});

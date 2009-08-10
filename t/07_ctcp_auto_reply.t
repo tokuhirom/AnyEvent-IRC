@@ -6,12 +6,12 @@ use AnyEvent::IRC::Util qw/encode_ctcp/;
 
 test_init (4, 1);
 
-state (start => undef, undef, sub {
+istate (start => undef, undef, sub {
    $CL2->send_srv (PRIVMSG => $NICK, encode_ctcp (['VERSION']));
    $CL2->send_srv (PRIVMSG => $NICK, encode_ctcp (['PING', 1235]));
 }, 'bot1_registered', 'bot2_registered');
 
-state (done => undef, undef, sub {
+istate (done => undef, undef, sub {
    $CL->disconnect ("done");
    $CL2->disconnect ("done");
 }, 'start', 'ctcp_version_reply', 'ctcp_ping_reply');
@@ -28,7 +28,7 @@ $CL2->reg_cb (
       if ($src eq $NICK) {
          is ($type, 'NOTICE', 'ping ctcp type is NOTICE');
          is ($msg, '1235', 'ping ctcp contents is correct');
-         state_done ('ctcp_ping_reply');
+         istate_done ('ctcp_ping_reply');
       }
    },
    ctcp_version => sub {
@@ -36,7 +36,7 @@ $CL2->reg_cb (
       if ($src eq $NICK) {
          is ($type, 'NOTICE', 'version ctcp type is NOTICE');
          is ($msg, 'ScriptBla:0.1:Perl', 'version ctcp contents is correct');
-         state_done ('ctcp_version_reply');
+         istate_done ('ctcp_version_reply');
       }
    },
 );

@@ -6,7 +6,7 @@ use AnyEvent::IRC::Util qw/prefix_nick/;
 
 test_init (11, 1);
 
-state (both_bots_joined => { },
+istate (both_bots_joined => { },
    sub {
       ($CL->channel_list ('#aic_test_1') || {})->{$NICK}
       && ($CL->channel_list ('#aic_test_1') || {})->{$NICK2}
@@ -19,7 +19,7 @@ state (both_bots_joined => { },
    }
 );
 
-state (both_bots_seen_each_other => { see_cnt => 2 },
+istate (both_bots_seen_each_other => { see_cnt => 2 },
    sub { $_[0]->{see_cnt} == 0 },
    sub {
       $CL->disconnect ('done');
@@ -29,7 +29,7 @@ state (both_bots_seen_each_other => { see_cnt => 2 },
 );
 
 $CL->reg_cb (
-   channel_add => sub { state_check () },
+   channel_add => sub { istate_check () },
    publicmsg => sub {
       my ($con, $targ, $msg) = @_;
 
@@ -49,13 +49,13 @@ $CL->reg_cb (
             'first bot sees second bot'
          );
 
-         state_check (both_bots_seen_each_other => sub { $_[0]->{see_cnt}-- });
+         istate_check (both_bots_seen_each_other => sub { $_[0]->{see_cnt}-- });
       }
    }
 );
 
 $CL2->reg_cb (
-   channel_add => sub { state_check () },
+   channel_add => sub { istate_check () },
    publicmsg => sub {
       my ($con, $targ, $msg) = @_;
 
@@ -82,7 +82,7 @@ $CL2->reg_cb (
             'second bot sees himself'
          );
 
-         state_check (both_bots_seen_each_other => sub { $_[0]->{see_cnt}-- });
+         istate_check (both_bots_seen_each_other => sub { $_[0]->{see_cnt}-- });
       }
    }
 );

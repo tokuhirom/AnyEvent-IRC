@@ -6,7 +6,7 @@ use AnyEvent::IRC::Util qw/encode_ctcp prefix_nick/;
 
 test_init (4, 1);
 
-state (start => undef, undef, sub {
+istate (start => undef, undef, sub {
    $CL->dcc_initiate ($NICK2, 'CHAT', 0, "127.0.0.1", 9593);
 }, 'bot1_registered', 'bot2_registered');
 

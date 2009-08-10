@@ -109,8 +109,9 @@ SEE ALSO
 
     AnyEvent
 
-    RFC 1459 - Internet Relay Chat: Client Protocol RFC 2812 - Internet
-    Relay Chat: Client Protocol
+    RFC 1459 - Internet Relay Chat: Client Protocol
+
+    RFC 2812 - Internet Relay Chat: Client Protocol
 
 BUGS
     Please report any bugs or feature requests to "bug-net-irc3 at

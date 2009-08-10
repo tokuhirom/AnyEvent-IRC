@@ -6,7 +6,7 @@ use AnyEvent::IRC::Util qw/prefix_nick/;
 
 test_init (6, 1);
 
-state (
+istate (
    first_bot_joined => {},
    sub { ($CL->channel_list ('#aic_test_3') || {})->{$NICK} },
    sub {
@@ -15,7 +15,7 @@ state (
    'bot1_registered', 'bot2_registered'
 );
 
-state (
+istate (
    second_bot_joined => {},
    sub { ($CL->channel_list ('#aic_test_3') || {})->{$NICK2} },
    sub {
@@ -25,7 +25,7 @@ state (
    'first_bot_joined'
 );
 
-$CL->reg_cb (channel_add => sub { state_check; });
+$CL->reg_cb (channel_add => sub { istate_check; });
 
 my $bot1_upd_cnt = 0;
 my $bot2_upd_cnt = 0;

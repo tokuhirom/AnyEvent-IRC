@@ -6,7 +6,7 @@ use AnyEvent::IRC::Util qw/prefix_nick/;
 
 test_init (2, 1);
 
-state (joining_second => undef, undef, sub {
+istate (joining_second => undef, undef, sub {
    $CL2->send_srv (JOIN => '#aic_test_2');
 }, 'voiced', 'bot2_registered');
 
@@ -26,7 +26,7 @@ $CL->reg_cb (
 
          if ($con->nick_modes ($chan, $con->nick)->{v}) {
             pass ("we were able to give us voice");
-            state_done ('voiced');
+            istate_done ('voiced');
          }
       }
    }
