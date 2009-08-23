@@ -148,8 +148,8 @@ ACKNOWLEDGEMENTS
 
     And these people have helped to work on AnyEvent::IRC:
 
-       * Maximilian Gaß - Added support for ISUPPORT and CASEMAPPING.
-       * Zaba           - Thanks for the useful input about IRC.
+       * Maximilian Gass - Added support for ISUPPORT and CASEMAPPING.
+       * Zaba            - Thanks for the useful input about IRC.
 
 COPYRIGHT & LICENSE
     Copyright 2006-2009 Robin Redeker, all rights reserved.
