@@ -5,3 +5,6 @@
 - add TOPIC support
 - add support for KILL!
 - add breaking of long lines (Zaba? patch? :)
+- add connect/auth timeout to AE::IRC::Connection & prepare cb
+  31 14:37:50 <Sadrak|work>  }, $arg{on_prepare} || sub { $timeout };
+
