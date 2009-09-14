@@ -1,6 +1,8 @@
 package AnyEvent::IRC::Client;
 use common::sense;
 
+use Scalar::Util qw/weaken/;
+
 use AnyEvent::Socket;
 use AnyEvent::Handle;
 use AnyEvent::IRC::Util
@@ -332,9 +334,6 @@ sub new {
 
    $self->reg_cb (disconnect  => \&disconnect_cb);
 
-   $self->reg_cb (irc_437     => \&change_nick_login_cb);
-   $self->reg_cb (irc_433     => \&change_nick_login_cb);
-
    $self->reg_cb (irc_332     => \&rpl_topic_cb);
    $self->reg_cb (irc_topic   => \&topic_change_cb);
 
@@ -342,12 +341,6 @@ sub new {
 
    $self->reg_cb (registered  => \&registered_cb);
 
-   $self->{channel_list}  = { };
-   $self->{isupport}      = { };
-   $self->{casemap_func}  = $LOWER_CASEMAP{rfc1459};
-   $self->{prefix_chars}  = '@+';
-   $self->{prefix2mode}   = { '@' => 'o', '+' => 'v' };
-   $self->{channel_chars} = '#&';
    $self->{def_nick_change} = $self->{nick_change} =
       sub {
          my ($old_nick) = @_;
@@ -356,7 +349,42 @@ sub new {
 
    $self->_setup_internal_dcc_handlers;
 
+   $self->cleanup;
+
    return $self;
+}
+
+sub cleanup {
+   my ($self) = @_;
+
+   $self->{channel_list}  = { };
+   $self->{isupport}      = { };
+   $self->{casemap_func}  = $LOWER_CASEMAP{rfc1459};
+   $self->{prefix_chars}  = '@+';
+   $self->{prefix2mode}   = { '@' => 'o', '+' => 'v' };
+   $self->{channel_chars} = '#&';
+
+   $self->{change_nick_cb_guard} =
+      $self->reg_cb (
+         irc_437 => \&change_nick_login_cb,
+         irc_433 => \&change_nick_login_cb,
+      );
+
+   delete $self->{dcc};
+   delete $self->{dcc_id};
+   delete $self->{_tmp_namereply};
+   delete $self->{last_pong_recv};
+   delete $self->{last_ping_sent};
+   delete $self->{_ping_timer};
+   delete $self->{con_queue};
+   delete $self->{chan_queue};
+   delete $self->{registered};
+   delete $self->{idents};
+   delete $self->{nick};
+   delete $self->{user};
+   delete $self->{real};
+   delete $self->{server_pass};
+   delete $self->{register_cb_guard};
 }
 
 =item $cl->connect ($host, $port)
@@ -383,7 +411,7 @@ sub connect {
    my ($self, $host, $port, $info) = @_;
 
    if (defined $info) {
-      $self->reg_cb (
+      $self->{register_cb_guard} = $self->reg_cb (
          ext_before_connect => sub {
             my ($self, $err) = @_;
 
@@ -393,7 +421,7 @@ sub connect {
                );
             }
 
-            $self->unreg_me;
+            delete $self->{register_cb_guard};
          }
       );
    }
@@ -648,7 +676,7 @@ sub enable_ping {
    $self->send_srv (PING => "AnyEvent::IRC");
 
    $self->{_ping_timer} =
-      AnyEvent->timer (after => $int, cb => sub {
+      AE::timer $int, 0, sub {
          if ($self->{last_pong_recv} < $self->{last_ping_sent}) {
             delete $self->{_ping_timer};
             if ($cb) {
@@ -660,7 +688,7 @@ sub enable_ping {
          } else {
             $self->enable_ping ($int, $cb);
          }
-      });
+      };
 }
 
 =item $cl->lower_case ($str)
@@ -965,12 +993,17 @@ sub dcc_initiate {
    my $id = ++$self->{dcc_id};
    my $dcc = $self->{dcc}->{$id} = { id => $id, type => $type, dest => $dest };
 
+   weaken $dcc;
+   weaken $self;
+
    $dcc->{timeout} = AnyEvent->timer (after => $timeout || 5 * 60, cb => sub {
-      $self->dcc_disconnect ($id, "TIMEOUT");
+      $self->dcc_disconnect ($id, "TIMEOUT") if $self;
    });
 
    $dcc->{listener} = tcp_server undef, $local_port, sub {
       my ($fh, $h, $p) = @_;
+      return unless $dcc && $self;
+
       delete $dcc->{listener};
       delete $dcc->{timeout};
 
@@ -988,6 +1021,8 @@ sub dcc_initiate {
 
    }, sub {
       my ($fh, $host, $port) = @_;
+      return unless $dcc && $self;
+
       $local_ip   = $host unless defined $local_ip;
       $local_port = $port;
 
@@ -1037,12 +1072,17 @@ sub dcc_accept {
    my $dcc = $self->{dcc}->{$id}
       or return;
 
+   weaken $dcc;
+   weaken $self;
+
    $dcc->{timeout} = AnyEvent->timer (after => $timeout || 5 * 60, cb => sub {
-      $self->dcc_disconnect ($id, "CONNECT TIMEOUT");
+      $self->dcc_disconnect ($id, "CONNECT TIMEOUT") if $self;
    });
 
    $dcc->{connect} = tcp_connect $dcc->{ip}, $dcc->{port}, sub {
       my ($fh) = @_;
+      return unless $dcc && $self;
+
       delete $dcc->{timeout};
       delete $dcc->{connect};
 
@@ -1212,11 +1252,9 @@ sub welcome_cb {
    my ($self, $msg) = @_;
 
    if ($self->{registered}) {
-      warn "welcome_cb has been called twice!\n";
       return;
    }
 
-   $self->unreg_me;
    $self->{registered} = 1;
    $self->event ('registered');
 }
@@ -1420,13 +1458,13 @@ sub change_nick_login_cb {
    my ($self, $msg) = @_;
 
    if ($self->registered) {
-      $self->unreg_me;
+      delete $self->{change_nick_cb_guard};
 
    } else {
       my $newnick = $self->{nick_change}->($self->nick);
 
       if ($self->lower_case ($newnick) eq $self->lower_case ($self->{nick})) {
-         $self->disconnect;
+         $self->disconnect ("couldn't change nick to non-conflicting one");
          return 0;
       }
 
@@ -1442,6 +1480,8 @@ sub disconnect_cb {
       $self->channel_remove (undef, $_, [$self->nick]);
       $self->event (channel_remove => undef, $_, $self->nick)
    }
+
+   $self->cleanup;
 }
 
 sub rpl_topic_cb {

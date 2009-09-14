@@ -76,7 +76,7 @@ sub new {
   return $self;
 }
 
-=item $con->connect ($host, $port)
+=item $con->connect ($host, $port [, $prepcb_or_timeout])
 
 Tries to open a socket to the host C<$host> and the port C<$port>.
 If an error occurred it will die (use eval to catch the exception).
@@ -84,50 +84,57 @@ If an error occurred it will die (use eval to catch the exception).
 If you want to connect via TLS/SSL you have to call the C<enable_ssl>
 method before to enable it.
 
+C<$prepcb_or_timeout> can either be a callback with the semantics of a prepare
+callback for the function C<tcp_connect> in L<AnyEvent::Socket> or a simple
+number which stands for a timeout.
+
 =cut
 
 sub connect {
-   my ($self, $host, $port) = @_;
+   my ($self, $host, $port, $prep) = @_;
 
-   $self->{socket}
-      and return;
+   if ($self->{socket}) {
+      $self->disconnect ("reconnect requested.");
+   }
 
-   tcp_connect $host, $port, sub {
-      my ($fh) = @_;
+warn "RCPTRO: $host,$port\n";
+   $self->{con_guard} =
+      tcp_connect $host, $port, sub {
+         my ($fh) = @_;
 
-      delete $self->{socket};
+         delete $self->{socket};
 
-      unless ($fh) {
-         $self->event (connect => $!);
-         return;
-      }
+         unless ($fh) {
+            $self->event (connect => $!);
+            return;
+         }
 
-      $self->{host} = $host;
-      $self->{port} = $port;
+         $self->{host} = $host;
+         $self->{port} = $port;
 
-      $self->{socket} =
-         AnyEvent::Handle->new (
-            fh => $fh,
-            ($self->{enable_ssl} ? (tls => 'connect') : ()),
-            on_eof => sub {
-               $self->disconnect ("EOF from server $host:$port");
-            },
-            on_error => sub {
-               $self->disconnect ("error in connection to server $host:$port: $!");
-            },
-            on_read => sub {
-               my ($hdl) = @_;
-               $hdl->push_read (line => sub {
-                  $self->_feed_irc_data ($_[1]);
-               });
-            },
-            on_drain => sub {
-               $self->event ('buffer_empty');
-            }
-         );
+         $self->{socket} =
+            AnyEvent::Handle->new (
+               fh => $fh,
+               ($self->{enable_ssl} ? (tls => 'connect') : ()),
+               on_eof => sub {
+                  $self->disconnect ("EOF from server $host:$port");
+               },
+               on_error => sub {
+                  $self->disconnect ("error in connection to server $host:$port: $!");
+               },
+               on_read => sub {
+                  my ($hdl) = @_;
+                  $hdl->push_read (line => sub {
+                     $self->_feed_irc_data ($_[1]);
+                  });
+               },
+               on_drain => sub {
+                  $self->event ('buffer_empty');
+               }
+            );
 
-      $self->event ('connect');
-   };
+         $self->event ('connect');
+      }, (defined $prep ? (ref $prep ? $prep : sub { $prep }) : ());
 }
 
 =item $con->enable_ssl ()
@@ -150,7 +157,8 @@ the sockets and send a 'disconnect' event with C<$reason> as argument.
 
 sub disconnect {
    my ($self, $reason) = @_;
-   return unless $self->{socket};
+
+   delete $self->{con_guard};
    delete $self->{socket};
    $self->event (disconnect => $reason);
 }
@@ -190,6 +198,7 @@ sub send_raw {
    my ($self, $ircline) = @_;
 
    return unless $self->{socket};
+   warn "SEND: $ircline\n";
    $self->{socket}->push_write ($ircline . "\015\012");
 }
 

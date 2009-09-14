@@ -1,5 +1,7 @@
 Revision history for AnyEvent::IRC
 
+        - made AnyEvent::IRC::Client connection object reusable.
+
 0.81    Mon Aug 10 09:43:29 CEST 2009
         - fixed some sample scripts.
         - added 'common::sense' to all the scripts and module files.

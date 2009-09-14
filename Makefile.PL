@@ -11,9 +11,10 @@ WriteMakefile(
     PL_FILES            => {},
     PREREQ_PM => {
         'Test::More'    => 0,
-        'AnyEvent'      => 0,
+        'AnyEvent'      => '5.111',
         'Object::Event' => '0.6',
         'common::sense' => 0,
+        'Scalar::Util'  => 0,
     },
     dist                => {
        COMPRESS => 'gzip -9f',
