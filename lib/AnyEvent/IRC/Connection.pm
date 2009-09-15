@@ -197,7 +197,6 @@ sub send_raw {
    my ($self, $ircline) = @_;
 
    return unless $self->{socket};
-   warn "SEND: $ircline\n";
    $self->{socket}->push_write ($ircline . "\015\012");
 }
 
