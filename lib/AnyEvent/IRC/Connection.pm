@@ -97,7 +97,6 @@ sub connect {
       $self->disconnect ("reconnect requested.");
    }
 
-warn "RCPTRO: $host,$port\n";
    $self->{con_guard} =
       tcp_connect $host, $port, sub {
          my ($fh) = @_;

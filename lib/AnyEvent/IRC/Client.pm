@@ -402,6 +402,7 @@ The keys of the hash reference you can pass in C<$info> are:
    user      - your username
    real      - your realname
    password  - the server password
+   timeout   - the TCP connect timeout
 
 All keys, except C<nick> are optional.
 
@@ -426,7 +427,7 @@ sub connect {
       );
    }
 
-   $self->SUPER::connect ($host, $port);
+   $self->SUPER::connect ($host, $port, $info->{timeout});
 }
 
 =item $cl->register ($nick, $user, $real, $server_pass)
