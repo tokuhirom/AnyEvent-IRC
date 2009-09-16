@@ -296,6 +296,9 @@ Is emitted everytime some command was received.
 
 This constructor takes no arguments.
 
+B<NOTE:> You are free to use the hash member C<heap> to store any associated
+data with this object. For example retry timers or anything else.
+
 =cut
 
 my %LOWER_CASEMAP = (

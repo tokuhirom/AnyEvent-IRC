@@ -56,13 +56,19 @@ C<encode_ctcp> and C<decode_ctcp> provided by L<AnyEvent::IRC::Util>.
 
 This constructor doesn't take any arguments.
 
+B<NOTE:> You are free to use the hash member C<heap> (which contains a hash) to
+store any associated data with this object. For example retry timers or
+anything else.
+
+You can also access that member via the C<heap> method.
+
 =cut
 
 sub new {
   my $this = shift;
   my $class = ref($this) || $this;
 
-  my $self = $class->SUPER::new (@_);
+  my $self = $class->SUPER::new (@_, heap => { });
 
   bless $self, $class;
 
@@ -176,8 +182,8 @@ sub is_connected {
 
 =item $con->heap ()
 
-Returns a hash reference that is local to this connection object
-that lets you store any information you want.
+Returns the hash reference stored in the C<heap> member, that is local to this
+connection object that lets you store any information you want.
 
 =cut
 
