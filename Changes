@@ -1,5 +1,6 @@
 Revision history for AnyEvent::IRC
 
+0.9     Mon Sep 28 14:51:29 CEST 2009
         - made AnyEvent::IRC::Client connection object reusable.
         - documented that the 'heap' member of the AE::IRC::* objects
           can be used to store any data.

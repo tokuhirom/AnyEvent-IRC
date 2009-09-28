@@ -1008,9 +1008,6 @@ sub dcc_initiate {
       my ($fh, $h, $p) = @_;
       return unless $dcc && $self;
 
-      delete $dcc->{listener};
-      delete $dcc->{timeout};
-
       $dcc->{handle} = AnyEvent::Handle->new (
          fh => $fh,
          on_eof => sub {
@@ -1022,6 +1019,9 @@ sub dcc_initiate {
       );
 
       $self->event (dcc_accepted => $id, $type, $dcc->{handle});
+
+      delete $dcc->{listener};
+      delete $dcc->{timeout};
 
    }, sub {
       my ($fh, $host, $port) = @_;

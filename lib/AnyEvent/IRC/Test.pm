@@ -32,21 +32,29 @@ AnyEvent::IRC::Test - A test helper module
 
 =cut
 
+sub read_env {
+   my ($cnt, $nd_cl) = @_;
+
+   if ($ENV{ANYEVENT_IRC_MAINTAINER_TEST_SERVER}) {
+      if ($ENV{ANYEVENT_IRC_MAINTAINER_TEST_SERVER} =~ /^([^:]+)(?::(\d+))?$/) {
+         ($SERVER, $PORT) = ($1, $2 || 6667);
+      }
+      if (defined $cnt) {
+         plan tests => $cnt + 2 + 1 + ($nd_cl ? 2 : 0);
+      }
+   } else {
+      plan skip_all => "maintainer tests disabled, env var ANYEVENT_IRC_MAINTAINER_TEST_SERVER not set.";
+      exit;
+   }
+}
+
 sub test_init {
    my ($cnt, $nd_cl) = @_;
 
    $NICK = 'aicbot';
    $NICK2 = 'AiCboT2';
 
-   if ($ENV{ANYEVENT_IRC_MAINTAINER_TEST_SERVER}) {
-      if ($ENV{ANYEVENT_IRC_MAINTAINER_TEST_SERVER} =~ /^([^:]+)(?::(\d+))?$/) {
-         ($SERVER, $PORT) = ($1, $2 || 6667);
-      }
-      plan tests => $cnt + 2 + 1 + ($nd_cl ? 2 : 0);
-   } else {
-      plan skip_all => "maintainer tests disabled, env var ANYEVENT_IRC_MAINTAINER_TEST_SERVER not set.";
-      exit;
-   }
+   read_env ($cnt, $nd_cl);
 
    my $DEBUG = $ENV{ANYEVENT_IRC_MAINTAINER_TEST_DEBUG};
 
@@ -144,7 +152,7 @@ my $delay_timer;
 sub test_start {
    my $delay = $ENV{ANYEVENT_IRC_MAINTAINER_TEST_DELAY};
 
-   if ($delay) {
+   if ($delay > 0) {
       $delay_timer = AnyEvent->timer (after => $delay, cb => sub {
          $CL->connect ($SERVER, $PORT, { nick => $NICK });
 
