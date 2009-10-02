@@ -848,6 +848,7 @@ sub nick_ident {
 }
 
 =item $cl->ctcp_auto_reply ($ctcp_command, @msg)
+
 =item $cl->ctcp_auto_reply ($ctcp_command, $coderef)
 
 This method installs an auto-reply for the reception of the C<$ctcp_command>
