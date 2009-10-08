@@ -15,6 +15,7 @@ WriteMakefile(
         'Object::Event' => '0.6',
         'common::sense' => 0,
         'Scalar::Util'  => 0,
+        'Encode'        => 0,
     },
     dist                => {
        COMPRESS => 'gzip -9f',

@@ -3,11 +3,13 @@ use common::sense;
 
 use Scalar::Util qw/weaken/;
 
+use Encode;
 use AnyEvent::Socket;
 use AnyEvent::Handle;
 use AnyEvent::IRC::Util
       qw/prefix_nick decode_ctcp split_prefix
-         is_nick_prefix join_prefix encode_ctcp/;
+         is_nick_prefix join_prefix encode_ctcp
+         split_unicode_string mk_msg/;
 
 use base AnyEvent::IRC::Connection::;
 
@@ -292,12 +294,29 @@ Is emitted everytime some command was received.
 
 =over 4
 
-=item $cl = AnyEvent::IRC::Client->new ()
+=item $cl = AnyEvent::IRC::Client->new (%args)
 
-This constructor takes no arguments.
+This is the constructor of a L<AnyEvent::IRC::Client> object,
+which stands logically for a client connected to ONE IRC server.
+You can reuse it and call C<connect> once it disconnected.
 
 B<NOTE:> You are free to use the hash member C<heap> to store any associated
 data with this object. For example retry timers or anything else.
+
+C<%args> may contain these options:
+
+=over 4
+
+=item send_initial_whois => $bool
+
+If this option is enabled an initial C<WHOIS> command is sent to your own
+NICKNAME to determine your own I<ident>. See also the method C<nick_ident>.
+This is necessary to ensure that the information about your own nickname
+is available as early as possible for the C<send_long_message> method.
+
+C<$bool> is C<false> by default.
+
+=back
 
 =cut
 
@@ -343,6 +362,8 @@ sub new {
    $self->reg_cb (ctcp        => \&ctcp_auto_reply_cb);
 
    $self->reg_cb (registered  => \&registered_cb);
+
+   $self->reg_cb (nick_change => \&update_ident_nick_change_cb);
 
    $self->{def_nick_change} = $self->{nick_change} =
       sub {
@@ -658,6 +679,88 @@ sub clear_chan_queue {
    $self->{chan_queue}->{$self->lower_case ($chan)} = [];
 }
 
+=item my (@lines) = $cl->send_long_message ($encoding, $overhead, $cmd, @params, $msg)
+
+As IRC only allows 512 byte blocks of messages and sometimes
+your messages might get longer, you have a problem. This method
+will solve your problem:
+
+This method can be used to split up long messages into multiple
+commands.
+
+C<$cmd> and C<@params> are the IRC command and it's first parameters,
+except the last one: the C<$msg>. C<$msg> can be a Unicode string,
+which will be encoded in C<$encoding> before sending.
+
+If you want to send a CTCP message you can encode it in the C<$cmd> by
+appending the CTCP command with a C<"\001">. For example if you want to
+send a CTCP ACTION you have to give this C<$cmd>:
+
+   $cl->send_long_message (undef, 0, "PRIVMSG\001ACTION", "#test", "rofls");
+
+C<$encoding> can be undef if you don't need any recoding of C<$msg>.
+But in case you want to send Unicode it is necessary to determine where
+to split a message exactly, to not break the encoding.
+
+Please also note that the C<nick_ident> for your own nick is necessary to
+compute this. To ensure best performance as possible use the
+C<send_initial_whois> option if you want to use this method.
+
+But note that this method might not work 100% correct and you might still get
+at least partially chopped off lines if you use C<send_long_message> before the
+C<WHOIS> reply to C<send_initial_whois> arrived.
+
+To be on the safest side you might want to wait until that initial C<WHOIS>
+reply arrived.
+
+The return value of this method is the list of the actually sent lines (but
+without encoding applied).
+
+=cut
+
+sub send_long_message {
+   my ($self, $encoding, $overhead, $cmd, @params) = @_;
+   my $msg = pop @params;
+
+   my $ctcp;
+   ($cmd, $ctcp) = split /\001/, $cmd;
+
+   my $id = $self->nick_ident ($self->nick);
+   if ($id eq '') {
+      $id = "X" x 60; # just in case the ident is not available...
+   }
+
+   my $init_len = length mk_msg ($id, $cmd, @params, " "); # i know off by 1
+
+   if ($ctcp ne '') {
+      $init_len += length ($ctcp) + 3; # CTCP cmd + " " + "\001" x 2
+   }
+
+   my $max_len = 500; # give 10 bytes extra margin
+
+   my $line_len = $max_len - $init_len;
+
+   # split up the multiple lines in the message:
+   my @lines = split /\n/, $msg;
+
+   # splitup long lines into multiple ones:
+   @lines =
+      map split_unicode_string ($encoding, $_, $line_len), @lines;
+
+   # send lines line-by-line:
+   for my $line (@lines) {
+      my $smsg = encode ($encoding, $line);
+
+      if ($ctcp ne '') {
+         $smsg = encode_ctcp ([$ctcp, $smsg])
+      }
+
+      $self->send_srv ($cmd => @params, $smsg);
+   }
+
+   @lines
+}
+
 =item $cl->enable_ping ($interval, $cb)
 
 This method enables a periodical ping to the server with an interval of
@@ -839,6 +942,9 @@ sub is_channel_name {
 
 This method returns the whole ident of the C<$nick> if the informations is available.
 If the nick's ident hasn't been seen yet, undef is returned.
+
+B<NOTE:> If you want to rely on the C<nick_ident> of your own nick you should
+make sure to enable the C<send_initial_whois> option in the constructor.
 
 =cut
 
@@ -1267,6 +1373,9 @@ sub welcome_cb {
 sub registered_cb {
    my ($self, $msg) = @_;
 
+   $self->send_srv (WHOIS => $self->nick)
+      if $self->{send_initial_whois};
+
    for (@{$self->{con_queue}}) {
       $self->send_msg (@$_);
    }
@@ -1348,11 +1457,11 @@ sub nick_cb {
       }
    }
 
+   $self->event (nick_change => $nick, $newnick, $wasme);
+
    for (@chans) {
       $self->event (channel_change => $_, $nick, $newnick, $wasme);
    }
-
-   $self->event (nick_change => $nick, $newnick, $wasme);
 }
 
 sub namereply_cb {
@@ -1512,6 +1621,17 @@ sub update_ident_cb {
    if (is_nick_prefix ($msg->{prefix})) {
       $self->update_ident ($msg->{prefix});
    }
+}
+
+sub update_ident_nick_change_cb {
+   my ($self, $old, $new) = @_;
+
+   my $oldid = $self->nick_ident ($old);
+   return unless defined $oldid;
+
+   my ($n, $u, $h) = split_prefix ($oldid);
+
+   $self->update_ident (join_prefix ($new, $u, $h));
 }
 
 sub ctcp_auto_reply_cb {

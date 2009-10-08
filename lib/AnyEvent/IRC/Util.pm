@@ -1,11 +1,13 @@
 package AnyEvent::IRC::Util;
 use common::sense;
 use Exporter;
+use Encode;
 our @ISA = qw/Exporter/;
 our @EXPORT_OK =
    qw(mk_msg parse_irc_msg split_prefix prefix_nick
       decode_ctcp encode_ctcp filter_ctcp_text_attr prefix_user prefix_host
-      rfc_code_to_name filter_colors is_nick_prefix join_prefix);
+      rfc_code_to_name filter_colors is_nick_prefix join_prefix
+      split_unicode_string);
 
 =head1 NAME
 
@@ -188,6 +190,13 @@ sub decode_ctcp {
    }
 
    $line =~ s/\001[^\001]*\001//g;
+
+   # try to parse broken ctcp messages anyway
+   if ($line =~ s/\001([^\001]*)$//) {
+      my $msg = unescape_ctcp ($1);
+      my ($tag, $data) = split / /, $msg, 2;
+      push @ctcp, [$tag, $data];
+   }
 
    return ($line, \@ctcp)
 }
@@ -491,6 +500,39 @@ our %RFC_NUMCODE_MAP = (
 sub rfc_code_to_name {
    my ($code) = @_;
    return $RFC_NUMCODE_MAP{$code} || $code;
+}
+
+=item my (@lines) = split_unicode_string ($encoding, $string, $maxlinebytes)
+
+This function splits up C<$string> into multiple C<@lines> which are
+not longer than C<$maxlinebytes> bytes. Encoding can be given in C<$encoding>.
+(eg. 'utf-8'). But the output will not be encoded.
+
+This function takes care that your characters are not garbled.
+
+=cut
+
+sub split_unicode_string {
+   my ($enc, $str, $maxlen) = @_;
+
+   return $str unless length (encode ($enc, $str)) > $maxlen;
+
+   my $cur_out = '';
+   my @lines;
+
+   while (length ($str) > 0) {
+
+      while (length (encode ($enc, $cur_out)) <= $maxlen
+             && length ($str) > 0) {
+
+         $cur_out .= substr $str, 0, 1, '';
+      }
+
+      push @lines, $cur_out;
+      $cur_out = '';
+   }
+
+   @lines
 }
 
 =head1 AUTHOR

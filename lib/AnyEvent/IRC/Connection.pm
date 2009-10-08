@@ -223,7 +223,12 @@ sub send_msg {
 sub _feed_irc_data {
    my ($self, $line) = @_;
 
+   #d# warn "LINE:[" . $line . "][".length ($line)."]";
+
    my $m = parse_irc_msg ($line);
+   #d# warn "MESSAGE{$m->{params}->[-1]}[".(length $m->{params}->[-1])."]\n";
+   #d# warn "HEX:" . join ('', map { sprintf "%2.2x", ord ($_) } split //, $line)
+   #d#     . "\n";
 
    $self->event (read => $m);
    $self->event ('irc_*' => $m);
