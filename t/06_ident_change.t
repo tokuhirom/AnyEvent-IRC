@@ -6,7 +6,7 @@ use AnyEvent::IRC::Test;
 use AnyEvent::IRC::Util qw/split_prefix join_prefix/;
 use Encode;
 
-test_init (3);
+test_init (4);
 
 my $cv = AE::cv;
 
@@ -48,8 +48,10 @@ $CL->reg_cb (
       is ($con->nick_ident ($new), join_prefix ($new, $u, $h),
           "nick change detected correctly");
 
-      $con->send_long_message (
-         'utf-8', 0, "PRIVMSG\001ACTION", $con->nick, $msg);
+      my @l =
+         $con->send_long_message (
+            'utf-8', 0, "PRIVMSG\001ACTION", $con->nick, $msg);
+      is (join ('', @l), $msg, "splitted lines match");
    }
 );
 

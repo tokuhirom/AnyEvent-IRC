@@ -172,6 +172,20 @@ C<$msg> is the PART message.
 Emitted when C<$old_nick> is renamed to C<$new_nick>.
 C<$is_myself> is true when yourself was the one who changed the nick.
 
+=item away_status_change => $bool
+
+Emitted whenever a presence/away status change for you was detected.
+C<$bool> is true if you are now away, or false/undef if you are not
+away anymore.
+
+You can change your away status by emitting the C<AWAY> IRC command:
+
+   $cl->send_srv (AWAY => "I'm not here right now");
+
+Or reset it:
+
+   $cl->send_srv ('AWAY');
+
 =item ctcp => $src, $target, $tag, $msg, $type
 
 Emitted when a CTCP message was found in either a NOTICE or PRIVMSG
@@ -344,6 +358,8 @@ sub new {
    $self->reg_cb (irc_366     => \&endofnames_cb);
    $self->reg_cb (irc_352     => \&whoreply_cb);
    $self->reg_cb (irc_311     => \&whoisuser_cb);
+   $self->reg_cb (irc_305     => \&away_change_cb);
+   $self->reg_cb (irc_306     => \&away_change_cb);
    $self->reg_cb (irc_ping    => \&ping_cb);
    $self->reg_cb (irc_pong    => \&pong_cb);
 
@@ -394,6 +410,7 @@ sub cleanup {
          irc_433 => \&change_nick_login_cb,
       );
 
+   delete $self->{away_status};
    delete $self->{dcc};
    delete $self->{dcc_id};
    delete $self->{_tmp_namereply};
@@ -952,6 +969,14 @@ sub nick_ident {
    my ($self, $nick) = @_;
    $self->{idents}->{$self->lower_case ($nick)}
 }
+
+=item my $bool = $cl->away_status
+
+Returns a true value if you are away or undef if you are not away.
+
+=cut
+
+sub away_status { $_[0]->{away_status} }
 
 =item $cl->ctcp_auto_reply ($ctcp_command, @msg)
 
@@ -1561,6 +1586,18 @@ sub mode_cb {
          }
       }
    }
+}
+
+sub away_change_cb {
+   my ($self, $msg) = @_;
+
+   if ($msg->{command} eq '305') { # no longer away
+      delete $self->{away_status};
+   } else { # away
+      $self->{away_status} = 1;
+   }
+
+   $self->event (away_status_change => $self->{away_status});
 }
 
 sub debug_cb {
