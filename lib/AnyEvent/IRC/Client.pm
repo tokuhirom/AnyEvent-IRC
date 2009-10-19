@@ -1542,7 +1542,7 @@ sub part_cb {
    my $chan = $msg->{params}->[0];
    my $nick = prefix_nick ($msg);
 
-   $self->event (part           => $nick, $chan, $self->_was_me ($msg), $msg->{params}->[1]);
+   $self->event (part => $nick, $chan, $self->_was_me ($msg), $msg->{params}->[1]);
    $self->channel_remove ($msg, $chan, [$nick]);
    $self->event (channel_remove => $msg, $chan, $nick);
 }
