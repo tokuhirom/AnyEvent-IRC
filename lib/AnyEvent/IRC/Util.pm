@@ -349,8 +349,6 @@ replies to the reply name in RFC 2812 (which you may also consult).
 C<$code> is returned if no name for C<$code> exists
 (as some server may extended the protocol).
 
-=back
-
 =cut
 
 our %RFC_NUMCODE_MAP = (
@@ -534,6 +532,8 @@ sub split_unicode_string {
 
    @lines
 }
+
+=back
 
 =head1 AUTHOR
 

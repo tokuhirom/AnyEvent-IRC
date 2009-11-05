@@ -1,5 +1,7 @@
 Revision history for AnyEvent::IRC
 
+        - fixed pod in AE::IRC::Util.
+
 0.95    Thu Nov  5 00:15:55 CET 2009
         - added away_status method and events for tracking your away status.
         - implemented send_long_message.
