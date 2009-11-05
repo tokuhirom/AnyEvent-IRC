@@ -22,9 +22,8 @@ $CL->reg_cb (
          ok (1, "found my own ident");
 
          $con->send_srv (NICK => 'tete123');
+         $con->unreg_me;
       }
-
-      $con->unreg_me;
    },
    ctcp_action => sub {
       my ($con, $src, $targ, $m, $type) = @_;
