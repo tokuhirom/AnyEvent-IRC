@@ -4,7 +4,7 @@ use AnyEvent;
 
 =head1 NAME
 
-AnyEvent::IRC - An event system independend IRC protocol module
+AnyEvent::IRC - An event based IRC protocol client API
 
 =head1 VERSION
 
