@@ -8,3 +8,5 @@
 - add connect/auth timeout to AE::IRC::Connection & prepare cb
   31 14:37:50 <Sadrak|work>  }, $arg{on_prepare} || sub { $timeout };
   - TEST IT!
+- add connect timeout!
+- and tcp keepalive.
