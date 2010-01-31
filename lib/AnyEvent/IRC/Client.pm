@@ -161,7 +161,7 @@ Emitted when C<$nick> PARTs the channel C<$channel>.
 C<$is_myself> is true if yourself are the one who PARTs.
 C<$msg> is the PART message.
 
-=item part => $kicked_nick, $channel, $is_myself, $msg
+=item kick => $kicked_nick, $channel, $is_myself, $msg
 
 Emitted when C<$kicked_nick> is KICKed from the channel C<$channel>.
 C<$is_myself> is true if yourself are the one who got KICKed.
