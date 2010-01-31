@@ -1552,7 +1552,7 @@ sub kick_cb {
    my $chan        = $msg->{params}->[0];
    my $kicked_nick = $msg->{params}->[1];
 
-   $self->event (kick           => $kicked_nick, $chan, $self->_was_me ($msg), $msg->{params}->[1]);
+   $self->event (kick           => $kicked_nick, $chan, $self->_was_me ($msg), $msg->{params}->[2]);
    $self->channel_remove ($msg, $chan, [$kicked_nick]);
    $self->event (channel_remove => $msg, $chan, $kicked_nick);
 }
